@@ -38,7 +38,6 @@ export class Canvas {
 
     draw(field) {
         if (!field || !field.length || !field[0].length) return;
-        console.log('field', field)
         if (this.rows !== field.length) {
 
             this.height = field.length * this.tile.height;
@@ -73,7 +72,7 @@ export class Canvas {
 
         } else {
             switch(tile.status) {
-  
+                
             }
         }
     }

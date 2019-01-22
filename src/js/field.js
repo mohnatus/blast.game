@@ -13,7 +13,7 @@ export class Field { // Игровое поле
         this.map = [];  // карта поля
     
         this.canvas = new Canvas(config.canvas); // канва для отрисовки
-        this.canvas.subscribe('click', this.onClick);
+        this.canvas.subscribe('click', (data) => this.onClick(data));
     
         for (let y = 0; y < this.height; y++) {
             this.map[y] = [];
@@ -60,6 +60,46 @@ export class Field { // Игровое поле
     }
 
     onClick(position) {
-        console.log('click', position)
+        let neighbors = this.getNeighbors(position);
+        console.log(neighbors);
+        //this.burn(position)
+    }
+
+    getNeighbors(position) {
+        
+        let tile = this.map[position.y][position.x];
+        if (!tile) return false;
+
+        let color = tile.color;
+
+        let neighbors = [];
+
+        let check = (position) => {
+            if ( // если клетка за пределами диапазона
+                position.x < 0 ||
+                position.y < 0 ||
+                position.x > this.width - 1 ||
+                position.y > this.height - 1
+            ) return; // пропустить ее
+
+            let currentTile = this.map[position.y][position.x]; // тайл с текущей позиции
+            if (
+                !currentTile || // если клетка пустая
+                currentTile.checked || // или уже проверенная
+                currentTile.color !== color // или цвет не совпадает
+            ) return; // пропустить ее
+
+            neighbors.push(position); // добавить клетку в массив
+            currentTile.checked = true; // пометить тайл как проверенный
+
+            check(new Point(position.x - 1, position.y));
+            check(new Point(position.x + 1, position.y));
+            check(new Point(position.x, position.y - 1))
+            check(new Point(position.x, position.y + 1))
+        }
+        
+        check(position);
+
+        return neighbors;
     }
 }
