@@ -1,9 +1,8 @@
-<<<<<<< HEAD
 .idea/
 node_modules/
 public/*.css
 public/*.js
-=======
+
 # Logs
 logs
 *.log
@@ -65,4 +64,4 @@ typings/
 
 # next.js build output
 .next
->>>>>>> 6b367fa26a869eb43fe613af5a480e05d6d024e7
+
