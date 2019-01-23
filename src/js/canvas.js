@@ -2,9 +2,24 @@ import { Point } from './point';
 import { Tile } from './tile';
 import { Subscriber } from './subscriber.js';
 
+import * as star from '../images/star.png';
+
+let settings = {
+    ratio: 1.14, // отношение высоты тайла к ширине
+    radiusPercent: 20, // радиус скругления фронтальной части
+    assets: {
+        'star': {
+            src: star,
+            widthRatio: 58,
+            heightRatio: 1
+        }
+    }
+}
+
 export class Canvas {
     
-    constructor(canvas, tile = { width: 60, height: 60}) {
+    constructor(canvas, tileSize = 100) {
+        console.log(123, star)
         new Subscriber(this);
 
         this.canvas = canvas;
@@ -30,10 +45,43 @@ export class Canvas {
 
         this.cols = 0;
         this.rows = 0;
-        this.tile = tile;
+        this.tile = {
+            width: tileSize,
+            height: settings.ratio * tileSize,
+            radius: tileSize * settings.radiusPercent / 100,
+        };
 
         this.width = 0;
         this.height = 0;
+
+        this.assets = {};
+        this.waitings = {};
+
+        this.loadAssets();
+    }
+
+    loadAssets() {
+        for (let asset in settings.assets) {
+            let img = new Image();
+            img.src = '/' + settings.assets[asset].src;
+            this.waitings[asset] = [];
+            img.onload = () => {
+                let width = settings.assets[asset].widthRatio * this.tile.width / 100;
+                this.assets[asset] = {
+                    src: img,
+                    width: width,
+                    height: width * settings.assets[asset].heightRatio
+                };
+                this.waitings[asset].forEach(callback => callback())
+            }
+
+        }
+    }
+
+    ifAsset(asset, callback) {
+        if (!settings.assets[asset]) return;
+        if (this.assets[asset]) callback();
+        else this.waitings[asset].push(callback);
     }
 
     draw(field, callback) {
@@ -65,11 +113,85 @@ export class Canvas {
     }
 
     drawTile(tile) {
-        if (!tile) return;
-        let coords = this.getCoordsByPoint(tile.position);
-        this.ctx.fillStyle = tile.color;
-        this.ctx.fillRect(coords.x1, coords.y1, this.tile.width, this.tile.height);
-        this.ctx.fill();
+        if (!tile) return; // пустая клетка
+        let ctx = this.ctx;
+        
+        let coords = this.getCoordsByPoint(tile.position); // координаты клетки
+
+        // координаты и размеры
+        // фронтальная часть
+        let x = coords.x1; 
+        let y = coords.y2 - this.tile.width;
+        let width = this.tile.width;
+        let height = this.tile.width;
+        let radius = this.tile.radius;
+        
+        let colors = this.getTileColors(x, y, tile.color);
+
+        
+    
+        // основной фон
+        ctx.fillStyle = colors.back;
+
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+        ctx.fill();
+
+        this.ifAsset('star', () => {
+
+            let star = this.assets.star;
+            let starX = x + (width - star.width) / 2;
+            let starY = y + (height - star.height) / 2;
+
+            // звездочка
+            ctx.globalCompositeOperation = "destination-out"
+            ctx.drawImage(star.src, starX, starY, star.width, star.height);
+
+            // фон звездочки
+            ctx.globalCompositeOperation = "destination-over";
+            ctx.fillStyle = colors.star;
+            ctx.fillRect(starX, starY, star.width, star.height);
+
+            ctx.globalCompositeOperation = 'source-over';
+        });
+    }
+
+    getTileColors(x, y, color) {
+        let baseColor = `hsl(${color}, 100%, 40%)`;
+        let lightColor = `hsl(${color}, 100%, 80%)`;
+        let darkColor = `hsl(${color}, 100%, 20%)`;
+
+        let x1 = x;
+        let x2 = x;
+        let y1 = y;
+        let y2 = y + this.tile.width;
+
+        console.log(x1, x2, y1, y2)
+
+        let back = this.ctx.createLinearGradient(x1, y1, x2, y2);
+        back.addColorStop(0, lightColor);
+        back.addColorStop(1, baseColor);
+
+        let star = this.ctx.createLinearGradient(x1, y1, x2, y2);
+        star.addColorStop(0, baseColor);
+        star.addColorStop(1, lightColor);
+
+        return {
+            back: back, 
+            star: star,
+            base: baseColor,
+            light: lightColor,
+            dark: darkColor
+        };
     }
 
     clearPosition(position) {

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0" />
+    <title>Blast Game</title>
+<link href="main.css" rel="stylesheet"></head>
+<body>
+    <div class="step">
+        Осталось ходов: <span class="step__count" data-bind="steps"></span>
+    </div>
+
+    <div class="points">
+        <div>
+            Нужно очков: <span data-bind="roundPoints"></span>
+        </div>
+        <div>
+            Набрано очков: <span data-bind="points"></span>
+        </div>
+    </div>
+	<canvas id="game-field"></canvas>
+<script type="text/javascript" src="bundle.js"></script></body>
+</html>
