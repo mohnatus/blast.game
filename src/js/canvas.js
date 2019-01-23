@@ -1,10 +1,12 @@
-import { Point } from './point.js';
-
-export { Tile } from './tile.js';
+import { Point } from './point';
+import { Tile } from './tile';
+import { Subscriber } from './subscriber.js';
 
 export class Canvas {
     
     constructor(canvas, tile = { width: 60, height: 60}) {
+        new Subscriber(this);
+
         this.canvas = canvas;
         this.ctx = this.canvas.getContext('2d');
 
@@ -32,11 +34,9 @@ export class Canvas {
 
         this.width = 0;
         this.height = 0;
-
-        this.subscribers = {};
     }
 
-    draw(field) {
+    draw(field, callback) {
         if (!field || !field.length || !field[0].length) return;
         if (this.rows !== field.length) {
 
@@ -60,6 +60,8 @@ export class Canvas {
                 this.drawTile(field[y][x]);
             }
         }
+
+        callback ? callback() : null;
     }
 
     drawTile(tile) {
@@ -130,20 +132,9 @@ export class Canvas {
                 this.clearPosition(tile.from);
                 this.drawTile(tile);
             })
+            setTimeout(callback, 1000)
         }, 1000)
 
         
-    }
-
-    subscribe(event, callback) {
-        if (!this.subscribers[event]) this.subscribers[event] = [];
-
-        this.subscribers[event].push(callback);
-    }
-
-    publish(event, data) {
-        let subscribers = this.subscribers[event];
-
-        subscribers.forEach(callback => callback(data));
     }
 }

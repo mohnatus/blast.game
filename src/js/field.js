@@ -1,16 +1,21 @@
-import { Point } from './point.js';
-import { Tile } from './tile.js';
-import { Canvas } from './canvas.js';
+import { Point } from './point';
+import { Tile } from './tile';
+import { Canvas } from './canvas';
+import { Subscriber } from './subscriber';
 
 export class Field { // Игровое поле
 
     constructor(config) { // создание поля нужного размера
+        new Subscriber(this);
+
+        this.inAction = false;
+
         this.cols = config.width; // количество колонок
         this.rows = config.height; // количество рядов
     
         this.colors = config.colors; // возможные цвета тайлов
 
-        this.min = config.min;
+        this.minGroupCount = config.min;
     
         this.map = [];  // карта поля
     
@@ -24,8 +29,6 @@ export class Field { // Игровое поле
                 this.map[y].push(null);
             }
         }
-
-        console.log(this.map)
     }
     
     forEachCell(callback) { // перебор клеток поля
@@ -46,8 +49,7 @@ export class Field { // Игровое поле
                 this.map[point.y][point.x] = tile;
             }
         })
-        console.log('fill', this.map)
-        this.canvas.draw(this.map);
+        this.canvas.draw(this.map, () => this.inAction = false);
     }
     
       // выбрать случайным образом цвет тайла
@@ -62,21 +64,25 @@ export class Field { // Игровое поле
     }
 
     onClick(position) {
+        if (this.inAction) return;
+        this.inAction = true;
+
         let neighbors = this.getNeighbors(position);
 
-        if (neighbors.length >= this.min) {
-            this.canvas.burn(neighbors, () => {
-                neighbors.forEach(point => {
-                    this.map[point.y][point.x] = null;
-                })
-                this.canvas.draw(this.map);
-                this.move();
-            });
-        }
+        if (neighbors.length < this.minGroupCount) return;
+
+        this.canvas.burn(neighbors, () => {
+            neighbors.forEach(point => {
+                this.map[point.y][point.x] = null;
+            })
+            this.canvas.draw(this.map);
+            this.move();
+        });
+
+        this.publish('burn', neighbors.length);        
     }
 
     getNeighbors(position) {
-        
         let tile = this.map[position.y][position.x];
         if (!tile) return false;
 
@@ -143,7 +149,19 @@ export class Field { // Игровое поле
             })
         })
 
-        this.canvas.move(this.map, () => this.canvas.fill())
+        this.canvas.move(this.map, () => this.fill())
 
+    }
+
+    subscribe(event, callback) {
+        if (!this.subscribers[event]) this.subscribers[event] = [];
+
+        this.subscribers[event].push(callback);
+    }
+
+    publish(event, data) {
+        let subscribers = this.subscribers[event];
+
+        subscribers.forEach(callback => callback(data));
     }
 }
