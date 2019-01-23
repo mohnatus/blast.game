@@ -65,7 +65,6 @@ export class Canvas {
     }
 
     drawTile(tile) {
-        console.log('draw', tile)
         if (!tile) return;
         let coords = this.getCoordsByPoint(tile.position);
         this.ctx.fillStyle = tile.color;
@@ -127,7 +126,6 @@ export class Canvas {
         })
 
         setTimeout(() => {
-            console.log('move')
             movingSet.forEach(tile => {
                 this.clearPosition(tile.from);
                 this.drawTile(tile);

@@ -8,6 +8,18 @@
     <title>Blast Game</title>
 </head>
 <body>
-	<canvas id="game"></canvas>
+    <div class="step">
+        Осталось ходов: <span class="step__count" data-bind="steps"></span>
+    </div>
+
+    <div class="points">
+        <div>
+            Нужно очков: <span data-bind="roundPoints"></span>
+        </div>
+        <div>
+            Набрано очков: <span data-bind="points"></span>
+        </div>
+    </div>
+	<canvas id="game-field"></canvas>
 </body>
 </html>

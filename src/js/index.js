@@ -4,7 +4,7 @@ import { Game } from './game.js';
 
 import './../sass/styles.scss';
 
-let canvas = document.getElementById('game');
+let canvas = document.getElementById('game-field');
 let game = new Game({
     canvas: canvas
 });
