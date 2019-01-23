@@ -1,8 +1,4 @@
-let statuses = {
-    'burning': 1, // сгорающий
-    'empty': 2, // сгоревший
-    'default': 3 // обычный
-};
+import { statuses } from './statuses.js';
 
 class Tile { // Тайл
     constructor(color) {
@@ -11,7 +7,5 @@ class Tile { // Тайл
       this.status = statuses.default; // статус тайла
     }
 }
-
-Tile.statuses = statuses;
 
 export { Tile }

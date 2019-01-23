@@ -4,6 +4,8 @@ import { Subscriber } from './subscriber.js';
 
 import * as star from '../images/star.png';
 
+import { statuses } from './statuses.js';
+
 let settings = {
     ratio: 1.14, // отношение высоты тайла к ширине
     radiusPercent: 20, // радиус скругления фронтальной части
@@ -13,58 +15,74 @@ let settings = {
             widthRatio: 58,
             heightRatio: 1
         }
-    }
+    },
+    speed: 10, // скорость перемещения тайлов
 }
 
 export class Canvas {
     
-    constructor(canvas, tileSize = 100) {
-        console.log(123, star)
+    constructor(canvas) {
+        let requestAnimationFrame = 
+        window.requestAnimationFrame || 
+        window.mozRequestAnimationFrame ||
+        window.webkitRequestAnimationFrame || 
+        window.msRequestAnimationFrame;
+        window.requestAnimationFrame = requestAnimationFrame;
+
         new Subscriber(this);
 
         this.canvas = canvas;
         this.ctx = this.canvas.getContext('2d');
 
-        let canvasCoords = this.canvas.getBoundingClientRect()
-        this.canvasX = canvasCoords.left;
-        this.canvasY = canvasCoords.top;
+        this.canvasPosition = null;
+        this.canvasSize = {
+            width: 0, 
+            height: 0
+        };
+        this.setSizes();
 
-        document.addEventListener('resize', (e) => {
-            let canvasCoords = this.canvas.getBoundingClientRect()
-            this.canvasX = canvasCoords.left;
-            this.canvasY = canvasCoords.top;
-        })
-
-        document.addEventListener('scroll', (e) => {
-            let canvasCoords = this.canvas.getBoundingClientRect()
-            this.canvasX = canvasCoords.left;
-            this.canvasY = canvasCoords.top;
-        })
-
+        // обработка клика по игровому полю
         this.canvas.addEventListener('click', (e) => this.onClick(e));
 
-        this.cols = 0;
-        this.rows = 0;
-        this.tile = {
-            width: tileSize,
-            height: settings.ratio * tileSize,
-            radius: tileSize * settings.radiusPercent / 100,
+        this.cols = 0; // количество колонок
+        this.rows = 0; // количество рядов
+
+        this.tile = { // настройки тайла
+            width: 0,
+            height: 0,
+            radius: 0,
         };
 
-        this.width = 0;
-        this.height = 0;
-
-        this.assets = {};
-        this.waitings = {};
-
+        this.assets = {}; // ассеты для рендера
         this.loadAssets();
     }
 
+    // установка и отслеживание размеров и позиции канвы
+    setSizes() {
+        this.canvasSize.width = this.canvas.offsetWidth;
+
+        let setPosition = () => {
+            let canvasCoords = this.canvas.getBoundingClientRect()
+            this.canvasPosition = new Point(canvasCoords.left, canvasCoords.top);
+        }
+        setPosition(); // сохранить текущее положение канвы
+
+        document.addEventListener('resize', (e) => {
+            setPosition(); // сохранить текущее положение канвы
+        });
+
+        document.addEventListener('scroll', (e) => {
+            setPosition();
+        });
+    }
+
+    // загрузка ассетов для рендера
     loadAssets() {
+        this._waitings = {}; // коллбэки, ожидающие загрузки ассетов
         for (let asset in settings.assets) {
             let img = new Image();
             img.src = '/' + settings.assets[asset].src;
-            this.waitings[asset] = [];
+            this._waitings[asset] = [];
             img.onload = () => {
                 let width = settings.assets[asset].widthRatio * this.tile.width / 100;
                 this.assets[asset] = {
@@ -72,39 +90,55 @@ export class Canvas {
                     width: width,
                     height: width * settings.assets[asset].heightRatio
                 };
-                this.waitings[asset].forEach(callback => callback())
+                this._waitings[asset].forEach(callback => callback())
             }
-
         }
     }
 
+    // коллбэки, зависящие от загрузки ассетов
     ifAsset(asset, callback) {
         if (!settings.assets[asset]) return;
         if (this.assets[asset]) callback();
-        else this.waitings[asset].push(callback);
+        else this._waitings[asset].push(callback);
     }
 
+    // рассчитать размеры тайла с учетом размеров канвы и количества колонок
+    setTileSize() {
+        let tileWidth = Math.floor(this.canvasSize.width / this.cols);
+        this.tile = { // настройки тайла
+            width: tileWidth,
+            height: settings.ratio * tileWidth,
+            radius: tileWidth * settings.radiusPercent / 100,
+        };
+    }
+
+    // отрисовать все игровое поле
     draw(field, callback) {
         if (!field || !field.length || !field[0].length) return;
-        if (this.rows !== field.length) {
 
-            this.height = field.length * this.tile.height;
-            this.canvas.height = `${this.height}`; 
-            this.rows = field.length;
-        }
+        this.field = field; // сохранить матрицу
 
+        // если количество колонок отличается от установленного
         if (this.cols !== field[0].length) {
-            this.width = field[0].length * this.tile.width;
-            this.canvas.width = `${this.width}`; 
             this.cols = field[0].length;
+            this.rows = field.length;
+            // рассчитать новые размеры тайла
+            this.setTileSize();
+            // установить высоту канвы
+            this.canvasSize.height = this.tile.height * this.rows;
+            this.canvas.height = `${this.canvasSize.height}`;
+        } else if (this.rows !== field.length) { // если отличается только количество рядов
+            this.rows = field.length;
+            this.canvasSize.height = this.tile.height * this.rows;
+            this.canvas.height = `${this.canvasSize.height}`;
         }
 
-        this.ctx.clearRect(0, 0, this.width, this.height);
+        // очистить канву
+        this.ctx.clearRect(0, 0, this.canvasSize.width, this.canvasSize.height);
 
-
+        // отрисовать каждый тайл
         for (let y = 0; y < this.rows; y++) {
             for (let x = 0; x < this.cols; x++) {
-                
                 this.drawTile(field[y][x]);
             }
         }
@@ -112,12 +146,23 @@ export class Canvas {
         callback ? callback() : null;
     }
 
-    drawTile(tile) {
+
+    // отрисовать один тайл
+    drawTile(tile, coords) {
         if (!tile) return; // пустая клетка
+        
+        if (tile.status == statuses.super) { // супертайл
+            this.drawTileSuper(tile, coords);
+        } else { // обычный тайл
+            this.drawTileDefault(tile, coords);
+        }
+    }
+
+    // отрисовать обычный тайл
+    drawTileDefault(tile, coords) {
         let ctx = this.ctx;
         
-        let coords = this.getCoordsByPoint(tile.position); // координаты клетки
-
+        coords = coords || this.getCoordsByPoint(tile.position); // координаты клетки
         // координаты и размеры
         // фронтальная часть
         let x = coords.x1; 
@@ -128,8 +173,6 @@ export class Canvas {
         
         let colors = this.getTileColors(x, y, tile.color);
 
-        
-    
         // основной фон
         ctx.fillStyle = colors.back;
 
@@ -159,12 +202,18 @@ export class Canvas {
             // фон звездочки
             ctx.globalCompositeOperation = "destination-over";
             ctx.fillStyle = colors.star;
-            ctx.fillRect(starX, starY, star.width, star.height);
+            ctx.fillRect(starX - 2, starY - 2, star.width + 4, star.height + 4);
 
             ctx.globalCompositeOperation = 'source-over';
         });
     }
 
+    // отрисовать супер-тайл
+    drawTileSuper(tile, coords) {
+        this.drawTileDefault(tile, coords);
+    }
+
+    // собрать набор цветов для тайла по значению оттенка цвета
     getTileColors(x, y, color) {
         let baseColor = `hsl(${color}, 100%, 40%)`;
         let lightColor = `hsl(${color}, 100%, 80%)`;
@@ -174,8 +223,6 @@ export class Canvas {
         let x2 = x;
         let y1 = y;
         let y2 = y + this.tile.width;
-
-        console.log(x1, x2, y1, y2)
 
         let back = this.ctx.createLinearGradient(x1, y1, x2, y2);
         back.addColorStop(0, lightColor);
@@ -194,18 +241,23 @@ export class Canvas {
         };
     }
 
-    clearPosition(position) {
-        if (!position) return;
-        let coords = this.getCoordsByPoint(position);
-        this.ctx.clearRect(coords.x1, coords.y1, this.tile.width, this.tile.height);
+    // очистить клетку поля
+    clearArea(coords) {
+        if (!coords) return;
+        this.ctx.clearRect(
+            coords.x1, coords.y1, 
+            coords.x2 - coords.x1, coords.y2 - coords.y1
+        );
     }
 
+    // получить позицию игрового поля по координатам канвы
     getPointByCoords(coords) {
         let x = Math.floor(coords.x / this.tile.width);
         let y = Math.floor(coords.y / this.tile.height);
         return new Point(x, y);
     }
 
+    // получить координаты клетки, соответствующей конкретной позиции игрового поля
     getCoordsByPoint(point) {
         let x1 = point.x * this.tile.width;
         let x2 = x1 + this.tile.width;
@@ -218,43 +270,113 @@ export class Canvas {
         };
     }
 
+    // обработка клика по канве
     onClick(event) {
-        let x = event.clientX - this.canvasX;
-        let y = event.clientY - this.canvasY;
+        let x = event.clientX - this.canvasPosition.x;
+        let y = event.clientY - this.canvasPosition.y;
         let position = this.getPointByCoords(new Point(x, y));
         this.publish('click', position);
     }
 
-    burn(cells, callback) {
-        cells.forEach(cell => {
-            let coords = this.getCoordsByPoint(cell);
-            this.ctx.fillStyle = 'black';
-            this.ctx.fillRect(coords.x1, coords.y1, this.tile.width, this.tile.height);
-            this.ctx.fill();
-        });
-        setTimeout(callback, 1000);
+    // удалить выбранные клетки с поля
+    delete(cells, callback) {
+        let deleted = [];
+        let addDeleted = (ind) => {
+            deleted.push(ind);
+            // вызвать коллбэк, когда все тайлы удалятся
+            if (deleted.length == cells.length) callback();
+        }
+        cells.forEach(
+            (cell, ind) => this.deleteTile(
+                cell, 
+                () => addDeleted(ind)
+            )
+        );
     }
 
+    // анимация удаления тайла
+    deleteTile(cell, callback) {
+        // получить координаты клетки
+        let coords = this.getCoordsByPoint(cell);
+
+        let centerX = coords.x1 + this.tile.width / 2;
+        let centerY = coords.y2 - this.tile.height / 2;
+
+        let start = performance.now();
+
+        this.ctx.fillStyle = 'black';
+        this.ctx.beginPath();
+
+        let step = timestamp => {
+            let progress = timestamp - start;
+            let radius = 0;
+            if (progress > 0) {
+                radius = progress / 30;
+                this.ctx.beginPath();
+                this.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                this.ctx.fill();
+            }
+            if (progress < 2000 && radius < this.tile.width / 2) {
+                requestAnimationFrame(step);
+            } else {
+                callback();
+            }
+        }
+
+        requestAnimationFrame(step);
+    }
+
+    // анимация перемещения тайлов
     move(field, callback) {
+        this.field = field;
+
         let movingSet = [];
         field.forEach((row, y) => {
             row.forEach((tile, x) => {
                 if (!tile || !tile.from) return;
                 if (tile.from.x !== x || tile.from.y !== y ) {
-                    
+                    tile.current = this.getCoordsByPoint(tile.from);
+                    tile.destination = this.getCoordsByPoint(tile.position);
                     movingSet.push(tile);
                 }
             })
         })
 
-        setTimeout(() => {
+        if (!movingSet.length) {
+            callback();
+            return;
+        }
+
+        let start = performance.now();
+
+        let step = (timestamp) => {
+            let next = false;
             movingSet.forEach(tile => {
-                this.clearPosition(tile.from);
-                this.drawTile(tile);
+                if (!tile.current) return;
+                this.clearArea(tile.current);
+
+                tile.current.y1 -= settings.speed;
+                tile.current.y2 -= settings.speed;
+
+                if (tile.current.y1 <= tile.destination.y1) {
+                    tile.current = null;
+                } else {
+                    next = true;
+                }
+                this.drawTile(tile, tile.current);
+
             })
-            setTimeout(callback, 1000)
-        }, 1000)
+            if (next) {
+                requestAnimationFrame(step);
+            } else {
+                callback();
+            }
+        }
+
+        requestAnimationFrame(step)
 
         
+
+
     }
 }

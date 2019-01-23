@@ -1,4 +1,6 @@
 let statuses = {
-  "normal": 1,
+  "default": 1,
   "super": 2, // super tile
 }
+
+export { statuses };
