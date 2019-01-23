@@ -63,7 +63,7 @@ export class Canvas {
     }
 
     drawTile(tile) {
-
+        if (!tile) return;
         let coords = this.getCoordsByPoint(tile.position);
         this.ctx.fillStyle = tile.color;
         this.ctx.fillRect(coords.x1, coords.y1, this.tile.width, this.tile.height);
@@ -100,6 +100,21 @@ export class Canvas {
         let y = event.clientY - this.canvasY;
         let position = this.getPointByCoords(new Point(x, y));
         this.publish('click', position);
+    }
+
+    burn(cells, callback) {
+        cells.forEach(cell => {
+            let coords = this.getCoordsByPoint(cell);
+            this.ctx.fillStyle = 'black';
+            this.ctx.fillRect(coords.x1, coords.y1, this.tile.width, this.tile.height);
+            this.ctx.fill();
+        });
+        setTimeout(callback, 1000);
+    }
+
+    move(field) {
+        console.log('move', field)
+        // for (let y = )
     }
 
     subscribe(event, callback) {

@@ -5,20 +5,22 @@ import { Canvas } from './canvas.js';
 export class Field { // Игровое поле
 
     constructor(config) { // создание поля нужного размера
-        this.width = config.width; // количество рядов
-        this.height = config.height; // количество колонок
+        this.cols = config.width; // количество колонок
+        this.rows = config.height; // количество рядов
     
         this.colors = config.colors; // возможные цвета тайлов
+
+        this.min = config.min;
     
         this.map = [];  // карта поля
     
         this.canvas = new Canvas(config.canvas); // канва для отрисовки
         this.canvas.subscribe('click', (data) => this.onClick(data));
     
-        for (let y = 0; y < this.height; y++) {
+        for (let y = 0; y < this.rows; y++) {
             this.map[y] = [];
     
-            for (let x = 0; x < this.width; x++) {
+            for (let x = 0; x < this.cols; x++) {
                 this.map[y].push(null);
             }
         }
@@ -27,8 +29,8 @@ export class Field { // Игровое поле
     }
     
     forEachCell(callback) { // перебор клеток поля
-        for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {
+        for (let y = 0; y < this.rows; y++) {
+            for (let x = 0; x < this.cols; x++) {
                 callback(new Point(x, y));
             }
         }
@@ -44,7 +46,7 @@ export class Field { // Игровое поле
                 this.map[point.y][point.x] = tile;
             }
         })
-
+        console.log('fill', this.map)
         this.canvas.draw(this.map);
     }
     
@@ -61,8 +63,16 @@ export class Field { // Игровое поле
 
     onClick(position) {
         let neighbors = this.getNeighbors(position);
-        console.log(neighbors);
-        //this.burn(position)
+
+        if (neighbors.length >= this.min) {
+            this.canvas.burn(neighbors, () => {
+                neighbors.forEach(point => {
+                    this.map[point.y][point.x] = null;
+                })
+                this.canvas.draw(this.map);
+                this.move();
+            });
+        }
     }
 
     getNeighbors(position) {
@@ -78,8 +88,8 @@ export class Field { // Игровое поле
             if ( // если клетка за пределами диапазона
                 position.x < 0 ||
                 position.y < 0 ||
-                position.x > this.width - 1 ||
-                position.y > this.height - 1
+                position.x > this.cols - 1 ||
+                position.y > this.rows - 1
             ) return; // пропустить ее
 
             let currentTile = this.map[position.y][position.x]; // тайл с текущей позиции
@@ -101,5 +111,35 @@ export class Field { // Игровое поле
         check(position);
 
         return neighbors;
+    }
+
+    move() {
+        // все тайлы поднимаются вверх на свободные места
+        let cols = [];
+        this.forEachCell(point => {
+            if (!cols[point.x]) cols[point.x] = [];
+            cols[point.x][point.y] = this.map[point.y][point.x];
+        })
+
+        cols = cols.map(x => {
+            x = x.filter(cell => {
+                if (!cell) return false;
+                cell.from = cell.position;
+                return cell;
+            });
+            for (let i = x.length; i < this.rows; i++) {
+                x[i] = null;
+            }
+            return x;
+        })
+
+        cols.forEach((col, x) => {
+            col.forEach((cell, y) => {
+                this.map[y][x] = cell;
+            })
+        })
+
+        this.canvas.move(this.map)
+
     }
 }
