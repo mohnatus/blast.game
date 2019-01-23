@@ -121,16 +121,20 @@ export class Field { // Игровое поле
             cols[point.x][point.y] = this.map[point.y][point.x];
         })
 
-        cols = cols.map(x => {
-            x = x.filter(cell => {
+        cols = cols.map((col, x) => {
+            col = col.filter(cell => {
                 if (!cell) return false;
                 cell.from = cell.position;
                 return cell;
             });
-            for (let i = x.length; i < this.rows; i++) {
-                x[i] = null;
+            for (let i = 0; i < this.rows; i++) {
+                if (!col[i]) {
+                    col[i] = null;
+                    continue;
+                }
+                col[i].position = new Point(x, i);
             }
-            return x;
+            return col;
         })
 
         cols.forEach((col, x) => {
@@ -139,7 +143,7 @@ export class Field { // Игровое поле
             })
         })
 
-        this.canvas.move(this.map)
+        this.canvas.move(this.map, () => this.canvas.fill())
 
     }
 }

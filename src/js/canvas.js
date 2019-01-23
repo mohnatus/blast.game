@@ -63,18 +63,18 @@ export class Canvas {
     }
 
     drawTile(tile) {
+        console.log('draw', tile)
         if (!tile) return;
         let coords = this.getCoordsByPoint(tile.position);
         this.ctx.fillStyle = tile.color;
         this.ctx.fillRect(coords.x1, coords.y1, this.tile.width, this.tile.height);
         this.ctx.fill();
-        if (!tile) { // пустая клетка
+    }
 
-        } else {
-            switch(tile.status) {
-                
-            }
-        }
+    clearPosition(position) {
+        if (!position) return;
+        let coords = this.getCoordsByPoint(position);
+        this.ctx.clearRect(coords.x1, coords.y1, this.tile.width, this.tile.height);
     }
 
     getPointByCoords(coords) {
@@ -112,9 +112,27 @@ export class Canvas {
         setTimeout(callback, 1000);
     }
 
-    move(field) {
-        console.log('move', field)
-        // for (let y = )
+    move(field, callback) {
+        let movingSet = [];
+        field.forEach((row, y) => {
+            row.forEach((tile, x) => {
+                if (!tile || !tile.from) return;
+                if (tile.from.x !== x || tile.from.y !== y ) {
+                    
+                    movingSet.push(tile);
+                }
+            })
+        })
+
+        setTimeout(() => {
+            console.log('move')
+            movingSet.forEach(tile => {
+                this.clearPosition(tile.from);
+                this.drawTile(tile);
+            })
+        }, 1000)
+
+        
     }
 
     subscribe(event, callback) {
