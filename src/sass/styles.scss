@@ -5,14 +5,18 @@ $radius: 15px;
 body { background-color: #a1a1a1; }
 
 .game {
-    width: 1000px;
+    width: 800px;
+    padding: 0 50px;
     margin: auto;
+
     .wrapper {
         display: flex;
+        justify-content: space-between;
     }
 }
 
 .playground {
+    
     .progress {
         width: 100%;
         padding: 10px 20px 20px;
@@ -89,3 +93,69 @@ body { background-color: #a1a1a1; }
     }
 }
 
+.info {
+    padding-left: 40px;
+
+    .stats {
+        position: relative;
+
+        width: 250px;
+        padding: 10px 30px;
+
+        background: #70f6ff;
+
+        border-radius: $radius * 2;
+
+        &:before {
+            content: '';
+
+            position: absolute;
+            top: 5px; bottom: 5px;
+            left: 5px; right: 5px;
+            border-radius: $radius * 1.5;
+
+            background: #20549a;
+
+            z-index: 0;
+        }
+
+    }
+
+    .step {
+        width: 180px;
+        height: 180px;
+        margin: auto;
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+
+        background: url(../images/ball.png) center / contain no-repeat;
+    }
+
+    .points {
+        position: relative;
+        margin: 15px 0;
+        padding: 5px 15px;
+
+        color: white;
+        background: #0b264c;
+
+        border-radius: $radius;
+
+        text-align: center;
+
+        span {
+            display: block;
+        }
+
+        .count {
+            font-size: 1.6em;
+        }
+    }
+
+    .bonuses {
+        
+    }
+}

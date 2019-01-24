@@ -14,7 +14,7 @@ export class Game {
         let binder = new HTMLBinder(
             this, 
             'data-bind', 
-            [ 'roundPoints', 'points', 'steps' ]
+            [ 'roundPoints', 'points', 'steps', 'level' ]
         );
         binder.bindProp(
             this, 
@@ -22,6 +22,8 @@ export class Game {
             'progress', 
             (el, val) => el.style.width = `${val}%`
         );
+
+        this.level = 1;
 
         this.steps = 15;
         this.points = 0;
