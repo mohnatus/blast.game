@@ -8,7 +8,7 @@ export class Field { // Игровое поле
     constructor(config) { // создание поля нужного размера
         new Subscriber(this);
 
-        this.inAction = false;
+        this.deactivate = false;
 
         this.cols = config.width; // количество колонок
         this.rows = config.height; // количество рядов
@@ -38,6 +38,10 @@ export class Field { // Игровое поле
             }
         }
     } 
+
+    start() {
+        this.canvas.onReady(() => this.fill())
+    }
     
     fill() { // заполнение пустых клеток
         this.forEachCell(point => {
@@ -64,7 +68,7 @@ export class Field { // Игровое поле
     }
 
     onClick(position) {
-        if (this.inAction) return;
+        if (this.deactivate) return;
         this.inAction = true;
 
         let neighbors = this.getNeighbors(position);
@@ -72,14 +76,16 @@ export class Field { // Игровое поле
         if (neighbors.length < this.minGroupCount) return;
 
         this.canvas.delete(this.map, neighbors, () => {
+            this.publish('remove', neighbors.length); 
             neighbors.forEach(point => {
                 this.map[point.y][point.x] = null;
             })
+
             this.canvas.draw(this.map);
             this.move();
         });
 
-        this.publish('burn', neighbors.length);        
+               
     }
 
     getNeighbors(position) {
@@ -163,5 +169,9 @@ export class Field { // Игровое поле
         let subscribers = this.subscribers[event];
 
         subscribers.forEach(callback => callback(data));
+    }
+
+    stop() {
+        this.deactivate = true;
     }
 }

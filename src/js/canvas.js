@@ -3,6 +3,7 @@ import { Tile } from './tile';
 import { Subscriber } from './subscriber.js';
 
 import * as star from '../images/star.png';
+import * as top from '../images/tile-top.png';
 
 import { statuses } from './statuses.js';
 
@@ -12,8 +13,13 @@ let settings = {
     assets: {
         'star': {
             src: star,
-            widthRatio: 58,
+            widthRatio: 0.58,
             heightRatio: 1
+        },
+        'top': {
+            src: top,
+            widthRatio: 0.95,
+            heightRatio: 0.17
         }
     },
     speed: {
@@ -33,6 +39,9 @@ export class Canvas {
         window.requestAnimationFrame = requestAnimationFrame;
 
         new Subscriber(this);
+
+        this.ready = false;
+        this.readyCallback = null;
 
         this.canvas = canvas;
         this.ctx = this.canvas.getContext('2d');
@@ -81,28 +90,41 @@ export class Canvas {
 
     // загрузка ассетов для рендера
     loadAssets() {
-        this._waitings = {}; // коллбэки, ожидающие загрузки ассетов
+        let loading = 0;
+        let loaded = 0;
+        let errors = 0;
+
+        let check = () => {
+            if (errors + loaded == loading) {
+                this.ready = true;
+                this.readyCallback ? this.readyCallback() : null;
+            }
+        }
+
         for (let asset in settings.assets) {
+            let assetSettings = settings.assets[asset];
             let img = new Image();
-            img.src = '/' + settings.assets[asset].src;
-            this._waitings[asset] = [];
+            img.src = '/' + assetSettings.src;
+            loading++;
             img.onload = () => {
-                let width = settings.assets[asset].widthRatio * this.tile.width / 100;
                 this.assets[asset] = {
                     src: img,
-                    width: width,
-                    height: width * settings.assets[asset].heightRatio
+                    widthRatio: assetSettings.widthRatio,
+                    heightRatio: assetSettings.heightRatio
                 };
-                this._waitings[asset].forEach(callback => callback())
+                loaded++;
+                check();
+            };
+            img.onerror = () => {
+                errors++;
+                check();
             }
         }
     }
 
-    // коллбэки, зависящие от загрузки ассетов
-    ifAsset(asset, callback) {
-        if (!settings.assets[asset]) return;
-        if (this.assets[asset]) callback();
-        else this._waitings[asset].push(callback);
+    onReady(callback) {
+        if (this.ready) callback();
+        else this.readyCallback = callback;
     }
 
     // рассчитать размеры тайла с учетом размеров канвы и количества колонок
@@ -118,6 +140,7 @@ export class Canvas {
     // отрисовать все игровое поле
     draw(field, callback) {
         if (!field || !field.length || !field[0].length) return;
+
 
         this.field = field; // сохранить матрицу
 
@@ -149,7 +172,6 @@ export class Canvas {
         callback ? callback() : null;
     }
 
-
     // отрисовать один тайл
     drawTile(tile, coords, size) {
         if (!tile) return; // пустая клетка
@@ -166,62 +188,68 @@ export class Canvas {
     // отрисовать обычный тайл
     drawTileDefault(tile, coords, size) {
         let ctx = this.ctx;
+        size = size || this.tile.width;
         
         coords = coords || this.getCoordsByPoint(tile.position); // координаты клетки
 
         // координаты и размеры
         let diff = this.tile.width - size;
-        // фронтальная часть
+        
         let x = coords.x1 + diff / 2; 
-        let y = coords.y2 - this.tile.width;
-        let width = size || this.tile.width;
+        let y = coords.y2 - size - diff / 2;
+        let width = size;
         let height = width;
         let radius = diff ? size * settings.radiusPercent / 100 : this.tile.radius;
-        
+
         let colors = this.getTileColors(x, y, tile.color);
 
-        // основной фон
-        ctx.fillStyle = colors.back;
+        let top = () => {
+            let top = this.assets.top;
+            let topWidth = width * top.widthRatio;
+            let topHeight = top.heightRatio * topWidth;
+            let topX = x + (width - topWidth) / 2;
+            let topY = y + radius / 4 - topHeight;
+            ctx.beginPath();
+            ctx.drawImage(top.src, topX, topY, topWidth, topHeight);
+            ctx.globalCompositeOperation = 'source-atop';
+            ctx.fillStyle = colors.dark;
+            ctx.fillRect(topX, topY, topWidth, topHeight);
+            ctx.globalCompositeOperation = 'source-over';
+        }
 
-        ctx.beginPath();
-        ctx.moveTo(x + radius, y);
-        ctx.lineTo(x + width - radius, y);
-        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-        ctx.lineTo(x + width, y + height - radius);
-        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-        ctx.lineTo(x + radius, y + height);
-        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-        ctx.lineTo(x, y + radius);
-        ctx.quadraticCurveTo(x, y, x + radius, y);
-        ctx.closePath();
-        ctx.fill();
+        let front = () => {
+            ctx.fillStyle = colors.back;
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            ctx.fill();
+        };
 
-        this.ifAsset('star', () => {
-
+        let star = () => {
             let star = this.assets.star;
-            let starWidth = star.width;
-            let starHeight = star.height;
-
-            if (diff) {
-                let starSettings = settings.assets.star;
-                starWidth = starSettings.widthRatio * width / 100;
-                starHeight = starWidth * starSettings.heightRatio;
-            }
-
+            let starWidth = width * star.widthRatio;
+            let starHeight = starWidth * star.heightRatio;
             let starX = x + (width - starWidth) / 2;
             let starY = y + (height - starHeight) / 2;
-
-            // звездочка
             ctx.globalCompositeOperation = "destination-out"
             ctx.drawImage(star.src, starX, starY, starWidth, starHeight);
-
-            // фон звездочки
             ctx.globalCompositeOperation = "destination-over";
             ctx.fillStyle = colors.star;
             ctx.fillRect(starX - 2, starY - 2, starWidth + 4, starHeight + 4);
-
             ctx.globalCompositeOperation = 'source-over';
-        });
+        };
+
+        top();
+        front();
+        star();
     }
 
     // отрисовать супер-тайл

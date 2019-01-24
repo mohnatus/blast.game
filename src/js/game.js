@@ -37,19 +37,21 @@ export class Game {
             canvas: config.canvas,
         });
 
-        this.field.subscribe('burn', count => {
-            this.steps--;
-
-            this.points += this.countPoints(count);
-            this.progress = this.points >= this.roundPoints ? 100 : this.points / this.roundPoints * 100;
-
-            if (this.points >= this.roundPoints) this.finish();
-
-            if (this.steps <= 0) this.finish();
-        })
+        this.field.subscribe('remove', count => this.onRemove(count))
   
         // заполнить пустое поле случайными тайлами
-        this.field.fill();
+        this.field.start();
+    }
+
+    onRemove(count) {
+        this.steps--;
+
+        this.points += this.countPoints(count);
+        this.progress = this.points >= this.roundPoints ? 100 : this.points / this.roundPoints * 100;
+
+        if (this.points >= this.roundPoints) this.finish();
+
+        if (this.steps <= 0) this.finish();
     }
 
     countPoints(count) {
@@ -61,7 +63,10 @@ export class Game {
     }
 
     finish() {
-        console.log('finish')
+        this.stopped = true;
+        this.field.stop();
+        let phrase = this.points >= this.roundPoints ? 'success' : 'fail';
+        alert('finish - ' + phrase )
     }
 }
   
