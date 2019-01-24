@@ -71,7 +71,7 @@ export class Field { // Игровое поле
 
         if (neighbors.length < this.minGroupCount) return;
 
-        this.canvas.delete(neighbors, () => {
+        this.canvas.delete(this.map, neighbors, () => {
             neighbors.forEach(point => {
                 this.map[point.y][point.x] = null;
             })

@@ -2,18 +2,31 @@ import { Field } from './field.js';
 import { defaultSettings } from './default.js';
 import { HTMLBinder } from './html-binder.js';
 
+import '../fonts/marvin.scss';
+
 export class Game {
 
     constructor(config) { // настройки игры
         this.default = defaultSettings; // настройки игры по умолчанию
 
-        new HTMLBinder(this, 'data-bind', [
-            'roundPoints', 'points', 'steps'
-        ]);
+        this.stopped = false; // игра окончена
+
+        let binder = new HTMLBinder(
+            this, 
+            'data-bind', 
+            [ 'roundPoints', 'points', 'steps' ]
+        );
+        binder.bindProp(
+            this, 
+            'data-progress', 
+            'progress', 
+            (el, val) => el.style.width = `${val}%`
+        );
 
         this.steps = 15;
         this.points = 0;
         this.roundPoints = 1000;
+        this.progress = this.points / this.roundPoints * 100;
       
         // создать игровое поле
         this.field = new Field({
@@ -25,10 +38,10 @@ export class Game {
         });
 
         this.field.subscribe('burn', count => {
-            console.log(`${count} tiles has been burned`)
             this.steps--;
 
             this.points += this.countPoints(count);
+            this.progress = this.points >= this.roundPoints ? 100 : this.points / this.roundPoints * 100;
 
             if (this.points >= this.roundPoints) this.finish();
 
@@ -40,7 +53,11 @@ export class Game {
     }
 
     countPoints(count) {
-        return count * 50;
+        let base = count * 10; // за каждый удаленный тайл 10 очков
+        if (count >=5 && count % 2) { // за 5, 7, 9, 11 и далее тайлов
+            base += (Math.floor(count / 2) - 1) * 10;
+        }
+        return base;
     }
 
     finish() {

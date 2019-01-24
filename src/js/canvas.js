@@ -16,7 +16,10 @@ let settings = {
             heightRatio: 1
         }
     },
-    speed: 10, // скорость перемещения тайлов
+    speed: {
+        move: 10, // скорость перемещения тайлов
+        remove: 5, // скорость удаления тайлов
+    }
 }
 
 export class Canvas {
@@ -148,28 +151,32 @@ export class Canvas {
 
 
     // отрисовать один тайл
-    drawTile(tile, coords) {
+    drawTile(tile, coords, size) {
         if (!tile) return; // пустая клетка
+
+        size = size || this.tile.width;
         
         if (tile.status == statuses.super) { // супертайл
-            this.drawTileSuper(tile, coords);
+            this.drawTileSuper(tile, coords, size);
         } else { // обычный тайл
-            this.drawTileDefault(tile, coords);
+            this.drawTileDefault(tile, coords, size);
         }
     }
 
     // отрисовать обычный тайл
-    drawTileDefault(tile, coords) {
+    drawTileDefault(tile, coords, size) {
         let ctx = this.ctx;
         
         coords = coords || this.getCoordsByPoint(tile.position); // координаты клетки
+
         // координаты и размеры
+        let diff = this.tile.width - size;
         // фронтальная часть
-        let x = coords.x1; 
+        let x = coords.x1 + diff / 2; 
         let y = coords.y2 - this.tile.width;
-        let width = this.tile.width;
-        let height = this.tile.width;
-        let radius = this.tile.radius;
+        let width = size || this.tile.width;
+        let height = width;
+        let radius = diff ? size * settings.radiusPercent / 100 : this.tile.radius;
         
         let colors = this.getTileColors(x, y, tile.color);
 
@@ -192,17 +199,26 @@ export class Canvas {
         this.ifAsset('star', () => {
 
             let star = this.assets.star;
-            let starX = x + (width - star.width) / 2;
-            let starY = y + (height - star.height) / 2;
+            let starWidth = star.width;
+            let starHeight = star.height;
+
+            if (diff) {
+                let starSettings = settings.assets.star;
+                starWidth = starSettings.widthRatio * width / 100;
+                starHeight = starWidth * starSettings.heightRatio;
+            }
+
+            let starX = x + (width - starWidth) / 2;
+            let starY = y + (height - starHeight) / 2;
 
             // звездочка
             ctx.globalCompositeOperation = "destination-out"
-            ctx.drawImage(star.src, starX, starY, star.width, star.height);
+            ctx.drawImage(star.src, starX, starY, starWidth, starHeight);
 
             // фон звездочки
             ctx.globalCompositeOperation = "destination-over";
             ctx.fillStyle = colors.star;
-            ctx.fillRect(starX - 2, starY - 2, star.width + 4, star.height + 4);
+            ctx.fillRect(starX - 2, starY - 2, starWidth + 4, starHeight + 4);
 
             ctx.globalCompositeOperation = 'source-over';
         });
@@ -217,7 +233,7 @@ export class Canvas {
     getTileColors(x, y, color) {
         let baseColor = `hsl(${color}, 100%, 40%)`;
         let lightColor = `hsl(${color}, 100%, 80%)`;
-        let darkColor = `hsl(${color}, 100%, 20%)`;
+        let darkColor = `hsl(${color}, 100%, 30%)`;
 
         let x1 = x;
         let x2 = x;
@@ -229,7 +245,7 @@ export class Canvas {
         back.addColorStop(1, baseColor);
 
         let star = this.ctx.createLinearGradient(x1, y1, x2, y2);
-        star.addColorStop(0, baseColor);
+        star.addColorStop(0, darkColor);
         star.addColorStop(1, lightColor);
 
         return {
@@ -279,7 +295,8 @@ export class Canvas {
     }
 
     // удалить выбранные клетки с поля
-    delete(cells, callback) {
+    delete(field, cells, callback) {
+        
         let deleted = [];
         let addDeleted = (ind) => {
             deleted.push(ind);
@@ -288,37 +305,49 @@ export class Canvas {
         }
         cells.forEach(
             (cell, ind) => this.deleteTile(
-                cell, 
+                field[cell.y][cell.x], 
                 () => addDeleted(ind)
             )
         );
     }
 
     // анимация удаления тайла
-    deleteTile(cell, callback) {
+    deleteTile(tile, callback) {
+
         // получить координаты клетки
-        let coords = this.getCoordsByPoint(cell);
+        let coords = this.getCoordsByPoint(tile.position);
 
         let centerX = coords.x1 + this.tile.width / 2;
         let centerY = coords.y2 - this.tile.height / 2;
 
         let start = performance.now();
 
-        this.ctx.fillStyle = 'black';
-        this.ctx.beginPath();
+        //this.ctx.fillStyle = 'black';
+        //this.ctx.beginPath();
+
+        let size = this.tile.width;
 
         let step = timestamp => {
             let progress = timestamp - start;
             let radius = 0;
             if (progress > 0) {
-                radius = progress / 30;
-                this.ctx.beginPath();
-                this.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-                this.ctx.fill();
+                // radius = progress / 30;
+                // this.ctx.beginPath();
+                // this.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                // this.ctx.fill();
+                this.clearArea(coords);
+                size -= settings.speed.remove;
+                this.drawTile(tile, null, size);
             }
-            if (progress < 2000 && radius < this.tile.width / 2) {
+            // if (progress < 2000 && radius < this.tile.width / 2) {
+            //     requestAnimationFrame(step);
+            // } else {
+            //     callback();
+            // }
+            if (size > 0) {
                 requestAnimationFrame(step);
             } else {
+                
                 callback();
             }
         }
@@ -355,8 +384,8 @@ export class Canvas {
                 if (!tile.current) return;
                 this.clearArea(tile.current);
 
-                tile.current.y1 -= settings.speed;
-                tile.current.y2 -= settings.speed;
+                tile.current.y1 -= settings.speed.move;
+                tile.current.y2 -= settings.speed.move;
 
                 if (tile.current.y1 <= tile.destination.y1) {
                     tile.current = null;
