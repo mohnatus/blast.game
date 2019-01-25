@@ -3,6 +3,7 @@ const argv = require('yargs').argv;
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const VueLoaderPlugin = require('vue-loader/lib/plugin'); 
 
 const isDevelopment = argv.mode === 'development';
 const isProduction = !isDevelopment;
@@ -18,6 +19,9 @@ const config = {
   },
   module: {
     rules: [{
+      test: /\.vue$/,
+      loader: 'vue-loader'
+    },{
       test: /\.html$/,
       use: 'html-loader'
     }, {
@@ -31,6 +35,7 @@ const config = {
       exclude: /node_modules/,
       use: [
         isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
+        'vue-style-loader',
         'css-loader',
         {
           loader: 'postcss-loader',
@@ -73,6 +78,7 @@ const config = {
     }]
   },
   plugins: [
+    new VueLoaderPlugin(),
     new MiniCssExtractPlugin({
       filename: '[name].css',
       chunkFilename: '[id].css'
