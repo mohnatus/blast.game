@@ -1,7 +1,7 @@
 import 'babel-polyfill';
 
-import { Game } from './game.js';
-import Game1 from './game1.vue';
+// import { Game } from './game.js';
+import Game from '../components/game.component.vue';
 
 import './../sass/styles.scss';
 
@@ -10,7 +10,7 @@ import Vue from 'vue/dist/vue.js';
 
 new Vue({
     el: "#game",
-    components: { Game1 }
+    components: { Game }
 })
 
 // let canvas = document.getElementById('game-field');
