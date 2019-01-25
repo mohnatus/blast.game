@@ -2,6 +2,9 @@ import { Field } from './field.js';
 import { defaultSettings } from './default.js';
 import { HTMLBinder } from './html-binder.js';
 
+import levels from './levels.js';
+import colors from './colors.js';
+
 import '../fonts/marvin.scss';
 
 export class Game {
