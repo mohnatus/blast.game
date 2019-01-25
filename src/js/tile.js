@@ -1,5 +1,3 @@
-
-
 class Tile { // Тайл
     constructor(color) {
       this.color = color; // цвет тайла

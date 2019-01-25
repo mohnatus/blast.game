@@ -1,91 +1,101 @@
 
-  import { Point } from '../js/point.js';
-  import { Tile } from '../js/tile.js';
-  import assets from '../js/assets.js';
+  import { Point } from './point.js';
+  import { Tile } from './tile.js';
+  import { assets } from './assets.js';
+  import { statuses } from './statuses.js';
 
   let settings = {
     heightRatio: 1.14, // отношение высоты тайла к ширине
     radiusRatio: 0.2, // скругление углов
+    deleteSpeed: 3,
   };
 
-  class TileView {
+  class TileViewer {
 
     constructor(readyCallback) {
-      this._width = 0;
-      this._height = 0;
-      this._radius = 0;
+        this.width = 0;
+        this.height = 0;
+        this.radius = 0;
 
-      this.assets = [];
-      this.loadAssets(readyCallback);
+        this.assets = [];
+        this.loadAssets(readyCallback);
     }
 
-    loadAssets(callback) => {
-      let loading = 0;
-      let loaded = 0;
-      let errors = 0;
+    loadAssets(callback) {
+        let loading = 0;
+        let loaded = 0;
+        let errors = 0;
 
-      let check = () => {
-          if (errors + loaded == loading) {
-              this.ready = true;
-              callback();
-          }
-      };
+        let check = () => {
+            if (errors + loaded == loading) {
+                this.ready = true;
+                callback ? callback() : null;
+            }
+        };
 
-      for (let asset in assets) {
-          let assetSettings = assets[asset];
-          let img = new Image();
-          img.src = '/' + assetSettings.src;
-          loading++;
-          img.onload = () => {
-              this.assets[asset] = {
-                  src: img,
-                  widthRatio: assetSettings.widthRatio,
-                  heightRatio: assetSettings.heightRatio
-              };
-              loaded++;
-              check();
-          };
-          img.onerror = () => {
-              errors++;
-              check();
-          }
-      }
-    },
-
-    set width(newValue) {
-      this._width = newValue;
-      this._height = this._width * settings.heightRatio;
-      this._radius = this._width * settings.radiusRatio;
-    }
-
-    draw(tile, coords, size) {
-      if (!tile) return; // пустая клетка
-
-        size = size || this.tile.width;
-        
-        if (tile.status == this.statuses.super) { // супертайл
-            this.drawTileSuper(tile, coords, size);
-        } else { // обычный тайл
-            this.drawTileDefault(tile, coords, size);
+        for (let asset in assets) {
+            let assetSettings = assets[asset];
+            let img = new Image();
+            img.src = '/' + assetSettings.src;
+            loading++;
+            img.onload = () => {
+                this.assets[asset] = {
+                    src: img,
+                    widthRatio: assetSettings.widthRatio,
+                    heightRatio: assetSettings.heightRatio
+                };
+                loaded++;
+                check();
+            };
+            img.onerror = () => {
+                errors++;
+                check();
+            }
         }
     }
 
-    drawTileDefault(tile, coords, size) {
+    setWidth(width) {
+        let sizes = this.getSizes(width);
+        this.width = sizes.width;
+        this.height = sizes.height;
+        this.radius = sizes.radius;
+    }
+
+    getSizes(width) {
+        return {
+            width: width,
+            height: width * settings.heightRatio,
+            radius: width * settings.radiusRatio
+        }
+    }
+
+    draw(tile, coords, size) {
+        if (!tile) return; // пустая клетка
+
+        size = size || this.width;
+        
+        if (tile.status == statuses.super) { // супертайл
+            this.drawSuper(tile, coords, size);
+        } else { // обычный тайл
+            this.drawDefault(tile, coords, size);
+        }
+    }
+
+    drawDefault(tile, coords, size) {
+       
         let ctx = this.ctx;
         
-        size = size || this.tile.width;
-        
-        coords = coords || this.getCoordsByPoint(tile.position); // координаты клетки
+        size = size && size !== 0 ? size : this.width;
 
         // координаты и размеры
-        let diff = this.tile.width - size;
-        
+        let diff = this.width - size;
+        let newSizes = diff ? this.getSizes(size) : null;
+
         let x = coords.x1 + diff / 2; 
         let y = coords.y2 - size - diff / 2;
         let width = size;
         let height = width;
-        let radius = diff ? size * settings.radiusPercent / 100 : this.tile.radius;
-
+        let radius = diff ? newSizes.radius : this.radius;
         let colors = this.getTileColors(x, y, tile.color);
 
         let top = () => {
@@ -138,8 +148,48 @@
     }
 
     // отрисовать супер-тайл
-    drawTileSuper(tile, coords) {
+    drawSuper(tile, coords) {
         this.drawTileDefault(tile, coords);
+    }
+
+    // удалить тайл
+    delete(tile, coords, callback) {
+
+        let start = performance.now();
+
+        let size = this.width;
+        let min = settings.deleteSpeed;
+
+        let step = timestamp => {
+            let progress = timestamp - start;
+            if (progress > 0) {
+                this.clear(coords);
+                size -= settings.deleteSpeed;
+
+                if (size > min) {
+                    this.draw(tile, coords, size);
+                }
+                    
+            }
+            if (size > min) {
+                requestAnimationFrame(step);
+            } else {
+                callback();
+            }
+        }
+
+        requestAnimationFrame(step);
+        
+    }
+
+    clear(coords) {
+
+        if (!coords) return;
+        this.ctx.clearRect(
+            coords.x1, coords.y1, 
+            coords.x2 - coords.x1, coords.y2 - coords.y1
+        );
+        
     }
 
     // собрать набор цветов для тайла по значению оттенка цвета
@@ -151,7 +201,7 @@
         let x1 = x;
         let x2 = x;
         let y1 = y;
-        let y2 = y + this.tile.width;
+        let y2 = y + this.width;
 
         let back = this.ctx.createLinearGradient(x1, y1, x2, y2);
         back.addColorStop(0, lightColor);
@@ -170,7 +220,9 @@
         };
     }
 
+    
+
   }
 
 
-  export { TileView };
+  export { TileViewer };
