@@ -16,11 +16,11 @@
 
 <script>
 export default {
-    props: ['bonuses'],
+    props: ['bonuses', 'gameActive'],
 
     methods: {
         apply: function(type) {
-            if (this.bonuses[type]) this.$emit('apply', type);
+            if (this.gameActive && this.bonuses[type]) this.$emit('apply', type);
         }
     }
 }

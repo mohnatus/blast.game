@@ -41,6 +41,7 @@
             </div>
             <Bonuses 
                 v-bind:bonuses="bonuses"
+                v-bind:gameActive="active"
                 v-on:apply="applyBonus"/>
         </div>
     </div>

@@ -6,6 +6,7 @@ let levels = [
     steps: 10,
     target: 200,
     min: 2,
+    bombRadius: 2
   },{
     rows: 10,
     cols: 10,

@@ -84,14 +84,10 @@ export default {
         
             if (!field || !field.length || !field[0].length) return;
 
-            console.log(field[0][0], this.field ? this.field[0][0] : null)
+            
 
             this.field = field; // сохранить матрицу
 
-            // очистить канву
-            //this.ctx.clearRect(0, 0, this.width, this.height);
-            
-            
             // отрисовать каждый тайл
             for (let y = 0; y < this.rows; y++) {
                 for (let x = 0; x < this.cols; x++) {
@@ -103,8 +99,6 @@ export default {
             }
             callback ? callback() : null;
         },
-
-        
 
         // получить позицию игрового поля по координатам канвы
         getPointByCoords: function(coords) {
@@ -132,28 +126,22 @@ export default {
             let y = $event.clientY - this.position.y;
             let position = this.getPointByCoords(new Point(x, y));
 
-            console.log('canvas click', x, y, position)
-
             this.$emit('tile-click', position);
         },
 
         // удалить выбранные клетки с поля
         delete: function(field, cells, callback) {
-            console.log('delte', field, cells)
             let deleted = [];
             let addDeleted = (ind) => {
                 deleted.push(ind);
                 // вызвать коллбэк, когда все тайлы удалятся
                 if (deleted.length == cells.length) callback();
             }
-
-            console.log('deleted', deleted)
             
             cells.forEach(
                 (cell, ind) => {
                     let tile = field[cell.y][cell.x];
                     let coords = this.getCoordsByPoint(tile.position);
-                    console.log(ind, cell, coords)
                     this.tileViewer.delete(
                         tile, 
                         coords,

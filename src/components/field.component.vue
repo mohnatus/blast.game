@@ -73,7 +73,69 @@ export default {
                 }
             });
 
-            this.$refs.canvas.draw(this.map, () => this.active = true);
+            if (this.check()) {
+                this.$refs.canvas.draw(this.map, () => this.active = true);
+            }
+                
+            else this.mix();
+        },
+
+        // проверить, есть ли доступные комбинации
+        check: function() {
+            let counter = 0;
+            let checked = [];
+            let availableGroups = false;
+
+            let check = (position, color) => {
+                if (counter >= this.min) return true;
+                if ( // если клетка за пределами диапазона
+                    position.x < 0 ||
+                    position.y < 0 ||
+                    position.x > this.cols - 1 ||
+                    position.y > this.rows - 1
+                ) return; // пропустить ее
+
+                let currentTile = this.map[position.y][position.x]; // тайл с текущей позиции
+                if (
+                    !currentTile || // если клетка пустая
+                    currentTile.checked || // или уже проверенная
+                    currentTile.color !== color // или цвет не совпадает
+                ) return; // пропустить ее
+
+                if (status) currentTile.status = status;
+
+                counter++; // увеличить счетчик
+                
+                currentTile.checked = true; // пометить тайл как проверенный
+                checked.push(currentTile)
+
+                check(new Point(position.x - 1, position.y), color);
+                check(new Point(position.x + 1, position.y), color);
+                check(new Point(position.x, position.y - 1), color);
+                check(new Point(position.x, position.y + 1), color);
+            }
+
+            stop: for (let y = 0; y < this.rows; y++) {
+                for (let x = 0; x < this.cols; x++) {
+
+                    let tile = this.map[y][x];
+                    
+                    if (tile.status == statuses.super) return true;
+
+                    counter = 0;
+                    check(tile.position, tile.color)
+                    if (counter >= this.min) {
+                        availableGroups = true;
+                        break stop;
+                    }
+                    //if (check(tile.position, tile.color)) { return true};
+
+                }
+            }
+
+            this.clearChecked();
+
+            return availableGroups;
         },
 
         // перебор клеток поля
@@ -98,7 +160,6 @@ export default {
 
         // клик по тайлу
         onClick: function(position) {
-
             if (!this.active || !this.gameActive) return;
 
             this.active = false; // деактивировать поле, пока выбираются тайлы для удаления
@@ -126,7 +187,6 @@ export default {
 
             // если обычный тайл и нет бомбы, собрать соседей
             if (!targets.length) {
-                
                 targets = this.getNeighbors(position);
 
                 // если группа меньше минимальной 
@@ -139,6 +199,8 @@ export default {
                     tile.status = statuses.super;
                 }
             } 
+
+            this.clearChecked();
 
             targets.forEach(cell => {
                 if (cell.x == position.x && cell.y == position.y) return;
@@ -158,7 +220,6 @@ export default {
                 targets.forEach(point => {
                     let tile = this.map[point.y][point.x];
                     if (!tile) return;
-                    tile.checked = false;
                     if (tile.status !== statuses.super)
                         this.map[point.y][point.x] = null;
                 })
@@ -169,6 +230,10 @@ export default {
                 // передвинуть тайлы
                 this.move();
             });
+        },
+
+        clearChecked: function() {
+            this.forEachCell((position) => this.map[position.y][position.x].checked = false)
         },
 
         // собрать ряд
@@ -184,6 +249,7 @@ export default {
             let color = tile.color;
 
             let neighbors = [];
+            let checked = [];
 
             let check = (position) => {
                 if ( // если клетка за пределами диапазона
@@ -194,6 +260,7 @@ export default {
                 ) return; // пропустить ее
 
                 let currentTile = this.map[position.y][position.x]; // тайл с текущей позиции
+                
                 if (
                     !currentTile || // если клетка пустая
                     currentTile.checked || // или уже проверенная
@@ -212,6 +279,8 @@ export default {
             }
             
             check(position);
+
+            this.clearChecked();
 
             return neighbors;
         },
@@ -286,7 +355,9 @@ export default {
                 }
             }
 
-            this.$refs.canvas.draw(this.map);
+            if (this.check()) {
+                this.$refs.canvas.draw(this.map, () => this.active = true);
+            } else this.mix();
         },
 
         randomSort: function(a, b) {
