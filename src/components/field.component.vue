@@ -12,7 +12,6 @@ import { Tile } from '../js/tile.js'; // модель тайла
 
 import { levels } from '../js/levels.js'; // настройки уровней
 import { statuses } from '../js/statuses.js'; // доступные статусы тайлов
-import { colors } from '../js/colors.js'; // доступные цвета тайлов
 
 export default {
     components: { 
@@ -37,7 +36,7 @@ export default {
             this.cols = settings.cols;
             this.min = settings.min;
 
-            this.colors = this.getColors(settings.colors); // отобрать цвета для уровня
+            this.colors = settings.colors; // отобрать цвета для уровня
 
             this.map = []; // собрать матрицу игрового поля
             for (let y = 0; y < this.rows; y++) {
@@ -48,20 +47,6 @@ export default {
             }
 
             this.$refs.canvas.update(settings)
-        },
-
-        // отобрать нужное количество цветов
-        getColors: function(count) { 
-            let levelColors = [];
-            let totalCount = colors.length;
-            
-            while (levelColors.length < count) {
-                // отобрать случайный цвет из всех возможных
-                let randomColor = colors[Math.floor(Math.random() * totalCount)];
-                if (!levelColors.includes(randomColor)) levelColors.push(randomColor);
-            }
-
-            return levelColors;
         },
 
         // начать уровень
@@ -108,6 +93,8 @@ export default {
 
         // клик по тайлу
         onClick: function(position) {
+            console.log('field click', position, this.active, this.gameActive)
+
             if (!this.active || !this.gameActive) return;
 
             this.active = false; // деактивировать поле, пока выбираются тайлы для удаления
@@ -117,16 +104,22 @@ export default {
 
             let targets;
 
+            console.log('tile', tile)
+
             // если супертайл, собрать всю колонку
 
             // если обычный тайл, собрать соседей
             targets = this.getNeighbors(position);
+
+            console.log('targets', targets)
 
             // если группа меньше минимальной 
             if (targets.length < this.min) {
                 this.active = true;
                 return;
             };
+
+
 
             // удалить группу тайлов из матрицы
             this.$refs.canvas.delete(this.map, targets, () => {

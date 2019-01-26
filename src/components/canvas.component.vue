@@ -132,6 +132,8 @@ export default {
             let y = $event.clientY - this.position.y;
             let position = this.getPointByCoords(new Point(x, y));
 
+            console.log('canvas click', x, y, position)
+
             this.$emit('tile-click', position);
         },
 

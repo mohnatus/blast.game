@@ -16,6 +16,7 @@
                         v-bind:target="target"
                         v-bind:maxLevel="maxLevel"
                         v-bind:level="level"
+                        v-on:new="newGame"
                         v-on:restart="restart"
                         v-on:next="next" />
                 </transition>
@@ -29,11 +30,11 @@
                 <div class="step">{{ steps }}</div>
                 <div class="points">
                     <span>Цель:</span>
-                    <span class="count">{{ target }}</span>
+                    <span class="count active">{{ target }}</span>
                 </div>
                 <div class="points">
                     <span>Очки:</span>
-                    <span class="count">{{ scores }}</span>
+                    <span class="count" v-bind:class="{active: scores >= target}">{{ scores }}</span>
                 </div>
             </div>
             <div class="bonuses">
@@ -72,7 +73,7 @@ export default {
 
     data () {
         return {
-            active: false, // игра идет
+            active: true, // игра идет
 
             scores: 0, // набрано очков
             target: 0, // цель уровня
@@ -129,6 +130,8 @@ export default {
             this.active = true;
         },
 
+
+
         onDelete: function(count) {
             // проверить на конец игры
             this.scores += this.countScores(count);
@@ -138,8 +141,6 @@ export default {
                 this.active = false;
                 return;
             }
-
-            
         },
 
         countScores: function(count) {
@@ -164,6 +165,11 @@ export default {
 
         restart: function() {
             this.initLevel(this.level);
+            this.start();
+        },
+
+        newGame: function() {
+            this.initLevel(1);
             this.start();
         }
     }
