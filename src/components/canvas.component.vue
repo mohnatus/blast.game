@@ -98,9 +98,6 @@ export default {
                     this.tileViewer.draw(tile, coords); 
                 }
             }
-
-        
-
             callback ? callback() : null;
         },
 
@@ -139,13 +136,14 @@ export default {
 
         // удалить выбранные клетки с поля
         delete: function(field, cells, callback) {
-            console.log(field, cells)
+            
             let deleted = [];
             let addDeleted = (ind) => {
                 deleted.push(ind);
                 // вызвать коллбэк, когда все тайлы удалятся
                 if (deleted.length == cells.length) callback();
             }
+            
             cells.forEach(
                 (cell, ind) => {
                     let tile = field[cell.y][cell.x];

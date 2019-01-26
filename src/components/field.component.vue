@@ -102,14 +102,13 @@ export default {
             this.active = false; // деактивировать поле, пока выбираются тайлы для удаления
 
             let targets;
+            // тайл, по которому кликнули
+            let tile = this.map[position.y][position.x];
 
             if (this.bonus == 'bomb') { // активен бустер бомба
-                this.$emit('bonusApplied');
-                targets = this.getRadius(position, this.bombRadius);
+                tile.status = statuses.bomb;
+                targets = this.getRadius(position, this.bombRadius, statuses.bomb);
             } else {
-                // тайл, по которому кликнули
-                let tile = this.map[position.y][position.x];
-
                 if (!tile) {
                     this.active = true;
                     return;
@@ -129,6 +128,7 @@ export default {
 
             // удалить группу тайлов из матрицы
             this.$refs.canvas.delete(this.map, targets, () => {
+                if (this.bonus) this.$emit('bonusApplied');
                 // удалить тайлы из матрицы после удаления с поля
                 targets.forEach(point => {
                     this.map[point.y][point.x] = null;
@@ -148,7 +148,7 @@ export default {
         },
 
         // собрать группу тайлов одного цвета
-        getNeighbors: function(position) {
+        getNeighbors: function(position, status) {
 
             let tile = this.map[position.y][position.x];
             let color = tile.color;
@@ -170,6 +170,8 @@ export default {
                     currentTile.color !== color // или цвет не совпадает
                 ) return; // пропустить ее
 
+                if (status) currentTile.status = status;
+
                 neighbors.push(position); // добавить клетку в массив
                 currentTile.checked = true; // пометить тайл как проверенный
 
@@ -185,7 +187,7 @@ export default {
         },
 
         // собрать группу тайлов в радиусе действия бомбы 
-        getRadius: function(position, radius) {
+        getRadius: function(position, radius, status) {
             let x1 = Math.max(position.x - radius, 0);
             let x2 = Math.min(position.x + radius, this.cols - 1);
 
@@ -196,6 +198,7 @@ export default {
 
             for (let y = y1; y <= y2; y++) {
                 for (let x = x1; x <= x2; x++) {
+                    if (status) this.map[y][x].status = status;
                     tiles.push(new Point(x, y));
                 }
             }

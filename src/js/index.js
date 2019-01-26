@@ -9,5 +9,11 @@ import Vue from 'vue/dist/vue.js';
 
 new Vue({
     el: "#game",
-    components: { Game }
+    template: `<Game v-bind:startLevel="startLevel" />`,
+    components: { Game },
+    data: function() {
+        return {
+            startLevel: localStorage.getItem('blast-level') || 1,
+        }
+    }
 });

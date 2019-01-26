@@ -7,7 +7,8 @@
   let settings = {
     heightRatio: 1.14, // отношение высоты тайла к ширине
     radiusRatio: 0.2, // скругление углов
-    deleteSpeed: 3,
+    deleteTime: 600, // скорость удаления тайлов
+    minSize: 5,
   };
 
   class TileViewer {
@@ -73,11 +74,16 @@
         if (!tile) return; // пустая клетка
 
         size = size || this.width;
-        
-        if (tile.status == statuses.super) { // супертайл
-            this.drawSuper(tile, coords, size);
-        } else { // обычный тайл
-            this.drawDefault(tile, coords, size);
+
+        switch(tile.status) {
+            case statuses.super:
+                this.drawSuper(tile, coords, size);
+                break;
+            case statuses.bomb:
+                this.drawBomb(tile, coords, size);
+                break;
+            default:
+                this.drawDefault(tile, coords, size);
         }
     }
 
@@ -148,38 +154,74 @@
     }
 
     // отрисовать супер-тайл
-    drawSuper(tile, coords) {
-        this.drawTileDefault(tile, coords);
+    drawSuper(tile, coords, size) {
+        this.drawDefault(tile, coords, size);
+    }
+
+    drawBomb(tile, coords, size) {
+        let ctx = this.ctx;
+        
+        size = size && size !== 0 && size < this.width ? size : this.width;
+
+        let bomb = this.assets.bomb;
+        
+        let bombWidth = size * bomb.widthRatio;
+        let bombHeight = bomb.heightRatio * bombWidth;
+        
+        let bombX = coords.x1 + (coords.x2 - coords.x1 - bombWidth) / 2;
+        let bombY = coords.y1 + (coords.y2 - coords.y1 - bombHeight) / 2;
+        ctx.beginPath();
+        ctx.drawImage(bomb.src, bombX, bombY, bombWidth, bombHeight);
     }
 
     // удалить тайл
     delete(tile, coords, callback) {
-
         let start = performance.now();
-
-        let size = this.width;
-        let min = settings.deleteSpeed;
+        let stop = settings.deleteTime;
 
         let step = timestamp => {
             let progress = timestamp - start;
-            if (progress > 0) {
-                this.clear(coords);
-                size -= settings.deleteSpeed;
+            this.clear(coords);
 
-                if (size > min) {
-                    this.draw(tile, coords, size);
-                }
-                    
-            }
-            if (size > min) {
+            let size = this.getDeleteSize(tile.status, progress);
+
+            if (progress < stop) {
+                this.draw(tile, coords, size);
                 requestAnimationFrame(step);
             } else {
                 callback();
             }
         }
 
-        requestAnimationFrame(step);
-        
+        requestAnimationFrame(step); 
+    }
+
+    getDeleteSize(status, time) {
+        if (time < 0) time = 0;
+        let size;
+
+        if (status == statuses.bomb) {
+            let increaseTime = settings.deleteTime / 3;
+            let decreaseTime = settings.deleteTime - increaseTime;
+            let increaseDiff = this.width / increaseTime;
+            let decreaseDiff = this.width / decreaseTime;
+
+            // если бомба - 300ms увеличение, потом уменьшение
+            if (time < increaseTime) {
+                size = increaseDiff * time;
+            } else {
+                time -= increaseTime;
+                size = this.width - decreaseDiff * time;
+                
+            }
+            console.log(time, '-', size)
+        } else {
+            let diff = this.width / settings.deleteTime;
+            // если обычный тайл - равномерное уменьшение
+            size = this.width - diff * time;
+        }
+
+        return size;
     }
 
     clear(coords) {
