@@ -75,16 +75,10 @@
 
         size = size || this.width;
 
-        switch(tile.status) {
-            case statuses.super:
-                this.drawSuper(tile, coords, size);
-                break;
-            case statuses.bomb:
-                this.drawBomb(tile, coords, size);
-                break;
-            default:
-                this.drawDefault(tile, coords, size);
-        }
+        if (tile.status == statuses.super || tile.super) this.drawSuper(tile, coords, size);
+        else if (tile.status == statuses.bomb) this.drawBomb(tile, coords, size);
+        else this.drawDefault(tile, coords, size);
+        
     }
 
     drawDefault(tile, coords, size) {
@@ -155,7 +149,69 @@
 
     // отрисовать супер-тайл
     drawSuper(tile, coords, size) {
-        this.drawDefault(tile, coords, size);
+        tile.super = true;
+        let ctx = this.ctx;
+        
+        size = size && size !== 0 ? size : this.width;
+
+        // координаты и размеры
+        let diff = this.width - size;
+        let newSizes = diff ? this.getSizes(size) : null;
+
+        let x = coords.x1 + diff / 2; 
+        let y = coords.y2 - size - diff / 2;
+        let width = size;
+        let height = width;
+        let radius = diff ? newSizes.radius : this.radius;
+        let colors = this.getTileColors(x, y, tile.color);
+
+        let top = () => {
+            let top = this.assets.top;
+            let topWidth = width * top.widthRatio;
+            let topHeight = top.heightRatio * topWidth;
+            let topX = x + (width - topWidth) / 2;
+            let topY = y + radius / 4 - topHeight;
+            ctx.beginPath();
+            ctx.drawImage(top.src, topX, topY, topWidth, topHeight);
+            ctx.globalCompositeOperation = 'source-atop';
+            ctx.fillStyle = colors.dark;
+            ctx.fillRect(topX, topY, topWidth, topHeight);
+            ctx.globalCompositeOperation = 'source-over';
+        }
+
+        let front = () => {
+            ctx.fillStyle = colors.back;
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            ctx.fill();
+        };
+
+        let star = () => {
+            let star = this.assets.star;
+            let starWidth = width * star.widthRatio;
+            let starHeight = starWidth * star.heightRatio;
+            let starX = x + (width - starWidth) / 2;
+            let starY = y + (height - starHeight) / 2;
+            ctx.globalCompositeOperation = "destination-out"
+            ctx.drawImage(star.src, starX, starY, starWidth, starHeight);
+            ctx.globalCompositeOperation = "destination-over";
+            ctx.fillStyle = colors.bright;
+            ctx.fillRect(starX - 2, starY - 2, starWidth + 4, starHeight + 4);
+            ctx.globalCompositeOperation = 'source-over';
+        };
+
+        top();
+        front();
+        star();
     }
 
     drawBomb(tile, coords, size) {
@@ -189,6 +245,7 @@
                 this.draw(tile, coords, size);
                 requestAnimationFrame(step);
             } else {
+                if (tile.status == statuses.super) this.draw(tile, coords, size)
                 callback();
             }
         }
@@ -199,8 +256,9 @@
     getDeleteSize(status, time) {
         if (time < 0) time = 0;
         let size;
-
-        if (status == statuses.bomb) {
+        if (status == statuses.super) {
+            size = this.width;
+        } else if (status == statuses.bomb) {
             let increaseTime = settings.deleteTime / 3;
             let decreaseTime = settings.deleteTime - increaseTime;
             let increaseDiff = this.width / increaseTime;
@@ -214,7 +272,6 @@
                 size = this.width - decreaseDiff * time;
                 
             }
-            console.log(time, '-', size)
         } else {
             let diff = this.width / settings.deleteTime;
             // если обычный тайл - равномерное уменьшение
@@ -236,9 +293,11 @@
 
     // собрать набор цветов для тайла по значению оттенка цвета
     getTileColors(x, y, color) {
-        let baseColor = `hsl(${color}, 100%, 40%)`;
-        let lightColor = `hsl(${color}, 100%, 80%)`;
-        let darkColor = `hsl(${color}, 100%, 30%)`;
+        let saturate = color == -1 ? '50' : '100';
+        let baseColor = `hsl(${color}, ${saturate}%, 40%)`;
+        let lightColor = `hsl(${color}, ${saturate}%, 80%)`;
+        let darkColor = `hsl(${color}, ${saturate}%, 30%)`;
+        let brightColor =  `hsl(${color}, ${saturate}%, 100%)`;
 
         let x1 = x;
         let x2 = x;
@@ -253,12 +312,17 @@
         star.addColorStop(0, darkColor);
         star.addColorStop(1, lightColor);
 
+        let bright = this.ctx.createLinearGradient(x1, y1, x2, y2);
+        bright.addColorStop(0, lightColor);
+        bright.addColorStop(1, brightColor);
+
         return {
             back: back, 
             star: star,
             base: baseColor,
             light: lightColor,
-            dark: darkColor
+            dark: darkColor,
+            bright: bright
         };
     }
 

@@ -81,7 +81,7 @@ export default {
 
         // отрисовать все поле
         draw: function(field, callback) {
-            console.log('draw', field)
+        
             if (!field || !field.length || !field[0].length) return;
 
             console.log(field[0][0], this.field ? this.field[0][0] : null)
@@ -139,18 +139,21 @@ export default {
 
         // удалить выбранные клетки с поля
         delete: function(field, cells, callback) {
-            
+            console.log('delte', field, cells)
             let deleted = [];
             let addDeleted = (ind) => {
                 deleted.push(ind);
                 // вызвать коллбэк, когда все тайлы удалятся
                 if (deleted.length == cells.length) callback();
             }
+
+            console.log('deleted', deleted)
             
             cells.forEach(
                 (cell, ind) => {
                     let tile = field[cell.y][cell.x];
                     let coords = this.getCoordsByPoint(tile.position);
+                    console.log(ind, cell, coords)
                     this.tileViewer.delete(
                         tile, 
                         coords,

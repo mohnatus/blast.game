@@ -26,6 +26,8 @@ export default {
         colors: [], // цвета тайлов
         bombRadius: 1, // радиус действия бомбы
 
+        superCount: 5, // количество тайлов для появления супертайла
+
         active: false, // поле неактивно, пока идут анимации
         }
     },
@@ -101,22 +103,30 @@ export default {
 
             this.active = false; // деактивировать поле, пока выбираются тайлы для удаления
 
-            let targets;
+            let targets = [];
             // тайл, по которому кликнули
             let tile = this.map[position.y][position.x];
+            if (!tile) {
+                this.active = true;
+                return;
+            }
 
-            if (this.bonus == 'bomb') { // активен бустер бомба
-                tile.status = statuses.bomb;
-                targets = this.getRadius(position, this.bombRadius, statuses.bomb);
-            } else {
-                if (!tile) {
-                    this.active = true;
-                    return;
-                }
+            // супертайл
+            if (tile.status == statuses.super) {
+                let row = this.getRow(position);
+                tile.status = statuses.default;
+                this.targetChecked = true;
+                targets = [...targets, ...row];
+            }
 
-                // если супертайл, собрать всю колонку
+            if (this.bonus == 'bomb') {
+                let radius = this.getRadius(position, this.bombRadius, statuses.bomb);
+                targets = [...targets, ...radius];
+            }
 
-                // если обычный тайл, собрать соседей
+            // если обычный тайл и нет бомбы, собрать соседей
+            if (!targets.length) {
+                
                 targets = this.getNeighbors(position);
 
                 // если группа меньше минимальной 
@@ -124,14 +134,33 @@ export default {
                     this.active = true;
                     return;
                 };
-            }
+
+                if (targets.length >= this.superCount) {
+                    tile.status = statuses.super;
+                }
+            } 
+
+            targets.forEach(cell => {
+                if (cell.x == position.x && cell.y == position.y) return;
+                let tile = this.map[cell.y][cell.x];
+                
+                if (!tile.targetChecked && tile.status == statuses.super) {
+                    tile.status = statuses.default;
+                    let row = this.getRow(tile.position);
+                    targets = [...targets, ...row];
+                }
+            })
 
             // удалить группу тайлов из матрицы
             this.$refs.canvas.delete(this.map, targets, () => {
                 if (this.bonus) this.$emit('bonusApplied');
                 // удалить тайлы из матрицы после удаления с поля
                 targets.forEach(point => {
-                    this.map[point.y][point.x] = null;
+                    let tile = this.map[point.y][point.x];
+                    if (!tile) return;
+                    tile.checked = false;
+                    if (tile.status !== statuses.super)
+                        this.map[point.y][point.x] = null;
                 })
                 // отправить событие в игру
                 this.$emit('delete', targets.length);
@@ -142,9 +171,10 @@ export default {
             });
         },
 
-        // собрать колонку
-        getColumn: function(position) {
-
+        // собрать ряд
+        getRow: function(position) {
+            let row = this.map[position.y];
+            return row.map((cell, ind) => new Point(ind, position.y));
         },
 
         // собрать группу тайлов одного цвета
