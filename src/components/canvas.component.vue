@@ -76,19 +76,22 @@ export default {
 
             this.tileViewer.setWidth(Math.floor(this.width / this.cols));
 
-            this.$refs.canvas.height = this.tileViewer.height * this.rows;
+            this.$refs.canvas.height = this.height = this.tileViewer.height * this.rows;
         },
 
         // отрисовать все поле
         draw: function(field, callback) {
-            
+            console.log('draw', field)
             if (!field || !field.length || !field[0].length) return;
+
+            console.log(field[0][0], this.field ? this.field[0][0] : null)
 
             this.field = field; // сохранить матрицу
 
             // очистить канву
             this.ctx.clearRect(0, 0, this.width, this.height);
-
+            
+            
             // отрисовать каждый тайл
             for (let y = 0; y < this.rows; y++) {
                 for (let x = 0; x < this.cols; x++) {

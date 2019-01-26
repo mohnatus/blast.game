@@ -81,16 +81,10 @@ export default {
 
             bonuses: { // количество бонусов
                 'bomb': 1,
-                'mix': 0,
+                'mix': 10,
             },
             bonus: null, // текущий бонус
-
-            results: {
-                'success': 1,
-                'fail': 2
-            },
-
-            
+           
         }
     },
 
@@ -178,6 +172,11 @@ export default {
         applyBonus: function(bonusType) {
             this.bonus = bonusType;
             this.bonuses[bonusType]--;
+
+            if (bonusType == 'mix') {
+                this.$refs.field.mix();
+                this.bonus = null;
+            }
         }
     }
 }

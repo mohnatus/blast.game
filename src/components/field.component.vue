@@ -240,6 +240,28 @@ export default {
             // после этого заполнить пустые клетки
             this.$refs.canvas.move(this.map, () => this.fill())
         },
+
+        // перемешать поле
+        mix: function() {
+            // перемешать ряды
+            this.map.sort(this.randomSort);
+
+            // перемешать элементы в каждом ряду
+            for (let y = 0; y < this.rows; y++) {
+                let row = this.map[y];
+                this.map[y].sort(this.randomSort);
+
+                for (let x = 0; x < this.cols; x++) {
+                    row[x].position = new Point(x, y);
+                }
+            }
+
+            this.$refs.canvas.draw(this.map);
+        },
+
+        randomSort: function(a, b) {
+            return Math.random() - 0.5;
+        }
     }
 }
 </script>
