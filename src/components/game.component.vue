@@ -76,12 +76,26 @@ export default {
             target: 0, // цель уровня
             steps: 0, // осталось шагов
 
+            bonusLast: { // последнее обработанное количество очков
+                bomb: 0,
+                mix: 0,
+            }, 
+
+            bonusSettings: {
+                'bomb': {
+                    step: 100
+                },
+                'mix': {
+                    step: 150,
+                }
+            },
+
             level: 1, // уровень
             maxLevel: levels.length, // максимальный уровень
 
             bonuses: { // количество бонусов
                 'bomb': 1,
-                'mix': 10,
+                'mix': 1,
             },
             bonus: null, // текущий бонус
            
@@ -128,9 +142,26 @@ export default {
             this.scores += this.countScores(count);
             this.steps--;
 
+            this.countBonuses();
+
             if (this.steps == 0 || this.scores >= this.target) {
                 this.active = false;
                 return;
+            }
+        },
+
+        countBonuses: function() {
+
+            for (let bonus in this.bonuses) {
+                let last = this.bonusLast[bonus] || 0;
+                let step = this.bonusSettings[bonus].step;
+                let count = Math.floor((this.scores - last) / step);
+                console.log(123, count, this.scores, last, step, bonus)
+                if (count) {
+                    this.bonusLast[bonus] += bonus.step * count;
+                    this.bonuses[bonus] += count;
+                }
+                
             }
         },
 

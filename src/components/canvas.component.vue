@@ -89,7 +89,7 @@ export default {
             this.field = field; // сохранить матрицу
 
             // очистить канву
-            this.ctx.clearRect(0, 0, this.width, this.height);
+            //this.ctx.clearRect(0, 0, this.width, this.height);
             
             
             // отрисовать каждый тайл
