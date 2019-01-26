@@ -139,7 +139,7 @@ export default {
 
         // удалить выбранные клетки с поля
         delete: function(field, cells, callback) {
-            
+            console.log(field, cells)
             let deleted = [];
             let addDeleted = (ind) => {
                 deleted.push(ind);

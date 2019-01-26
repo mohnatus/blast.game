@@ -8,7 +8,9 @@
                 <Field ref="field"
                     v-on:ready="start"
                     v-on:delete="onDelete"
-                    v-bind:gameActive="active" />
+                    v-on:bonusApplied="bonus = null"
+                    v-bind:gameActive="active"
+                    v-bind:bonus="bonus" />
                 <transition name="fade">
                     <Result 
                         v-if="!active" 
@@ -37,15 +39,9 @@
                     <span class="count" v-bind:class="{active: scores >= target}">{{ scores }}</span>
                 </div>
             </div>
-            <div class="bonuses">
-                Бонусы
-                <div class="bonuses-items">
-                    <div class="bonus" v-for="(count,bonus) in bonuses" v-bind:key="bonus">
-                        <div class="bonus-icon">{{ bonus }}</div>
-                        <div class="bonus-count">{{ count }}</div>
-                    </div>
-                </div>
-            </div>
+            <Bonuses 
+                v-bind:bonuses="bonuses"
+                v-on:apply="applyBonus"/>
         </div>
     </div>
 </template>
@@ -58,13 +54,14 @@
 import Progress from './progress.component.vue';
 import Field from './field.component.vue';
 import Result from './result.component.vue';
+import Bonuses from './bonuses.component.vue';
 
 import { levels } from '../js/levels.js'; // настройки уровней
 import { itemScore, addScores } from '../js/scores.js'; // начисление очков
 
 
 export default {
-    components: { Progress, Field, Result },
+    components: { Progress, Field, Result, Bonuses },
 
     props: [
         'startLevel', // начальный уровень
@@ -83,9 +80,10 @@ export default {
             maxLevel: levels.length, // максимальный уровень
 
             bonuses: { // количество бонусов
-                'bomb': 0,
+                'bomb': 1,
                 'mix': 0,
             },
+            bonus: null, // текущий бонус
 
             results: {
                 'success': 1,
@@ -102,7 +100,7 @@ export default {
 
         // установить доступные бонусы
         if (this.startBonuses) {
-            this.bonuses = this.startBonuses || [];
+            this.bonuses = this.startBonuses;
         }
 
         this.active = true;
@@ -130,8 +128,7 @@ export default {
             this.active = true;
         },
 
-
-
+        // удаление группы клеток
         onDelete: function(count) {
             // проверить на конец игры
             this.scores += this.countScores(count);
@@ -143,6 +140,7 @@ export default {
             }
         },
 
+        // вычисление количества очков
         countScores: function(count) {
             let scores = count * itemScore;
 
@@ -156,6 +154,7 @@ export default {
             return scores;
         },
 
+        // следующий уровень
         next: function() {
             if (this.level < this.maxLevel) {
                 this.initLevel(this.level + 1);
@@ -163,14 +162,22 @@ export default {
             }
         },
 
+        // переиграть уровень
         restart: function() {
             this.initLevel(this.level);
             this.start();
         },
 
+        // начать игру сначала
         newGame: function() {
             this.initLevel(1);
             this.start();
+        },
+
+        // применить бонус
+        applyBonus: function(bonusType) {
+            this.bonus = bonusType;
+            this.bonuses[bonusType]--;
         }
     }
 }

@@ -18,12 +18,13 @@ export default {
       'game-canvas': Canvas
     },
 
-    props: ['gameActive'],
+    props: ['gameActive', 'bonus'],
     
     data: function() {
         return {
         map: [], // матрица поля
         colors: [], // цвета тайлов
+        bombRadius: 1, // радиус действия бомбы
 
         active: false, // поле неактивно, пока идут анимации
         }
@@ -37,6 +38,8 @@ export default {
             this.min = settings.min;
 
             this.colors = settings.colors; // отобрать цвета для уровня
+
+            this.bombRadius = settings.bombRadius || 1; 
 
             this.map = []; // собрать матрицу игрового поля
             for (let y = 0; y < this.rows; y++) {
@@ -93,33 +96,36 @@ export default {
 
         // клик по тайлу
         onClick: function(position) {
-            console.log('field click', position, this.active, this.gameActive)
 
             if (!this.active || !this.gameActive) return;
 
             this.active = false; // деактивировать поле, пока выбираются тайлы для удаления
 
-            // тайл, по которому кликнули
-            let tile = this.map[position.y][position.x];
-
             let targets;
 
-            console.log('tile', tile)
+            if (this.bonus == 'bomb') { // активен бустер бомба
+                this.$emit('bonusApplied');
+                targets = this.getRadius(position, this.bombRadius);
+            } else {
+                // тайл, по которому кликнули
+                let tile = this.map[position.y][position.x];
 
-            // если супертайл, собрать всю колонку
+                if (!tile) {
+                    this.active = true;
+                    return;
+                }
 
-            // если обычный тайл, собрать соседей
-            targets = this.getNeighbors(position);
+                // если супертайл, собрать всю колонку
 
-            console.log('targets', targets)
+                // если обычный тайл, собрать соседей
+                targets = this.getNeighbors(position);
 
-            // если группа меньше минимальной 
-            if (targets.length < this.min) {
-                this.active = true;
-                return;
-            };
-
-
+                // если группа меньше минимальной 
+                if (targets.length < this.min) {
+                    this.active = true;
+                    return;
+                };
+            }
 
             // удалить группу тайлов из матрицы
             this.$refs.canvas.delete(this.map, targets, () => {
@@ -145,8 +151,6 @@ export default {
         getNeighbors: function(position) {
 
             let tile = this.map[position.y][position.x];
-            if (!tile) return false;
-
             let color = tile.color;
 
             let neighbors = [];
@@ -178,6 +182,24 @@ export default {
             check(position);
 
             return neighbors;
+        },
+
+        // собрать группу тайлов в радиусе действия бомбы 
+        getRadius: function(position, radius) {
+            let x1 = Math.max(position.x - radius, 0);
+            let x2 = Math.min(position.x + radius, this.cols - 1);
+
+            let y1 = Math.max(position.y - radius, 0);
+            let y2 = Math.min(position.y + radius, this.rows - 1);
+
+            let tiles = [];
+
+            for (let y = y1; y <= y2; y++) {
+                for (let x = x1; x <= x2; x++) {
+                    tiles.push(new Point(x, y));
+                }
+            }
+            return tiles;
         },
 
         // передвинуть тайлы на место пустых
