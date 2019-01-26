@@ -4,7 +4,7 @@
             <Progress 
                 v-bind:scores="scores" 
                 v-bind:target="target" />
-            <div class="field">
+            <div class="field" v-bind:data-bonus="bonus">
                 <Field ref="field"
                     v-on:ready="start"
                     v-on:delete="onDelete"

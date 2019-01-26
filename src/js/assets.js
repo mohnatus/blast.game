@@ -1,6 +1,6 @@
 import * as star from '../images/star.png';
 import * as top from '../images/tile-top.png';
-import * as bomb from '../images/bomb.png';
+import * as bomb from '../images/explosion.png';
 
 let assets = {
     'star': {
