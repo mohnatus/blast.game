@@ -1,177 +1,233 @@
+$backgroundColor: #a1a1a1;
+$labelHeight: 30px;
 
 $radius: 15px;
+$bigRadius: 24px;
+
+$outerShadow: 0 0 50px 3px rgba(21, 46, 79, 0.3);
+
+
+$blueGradient: linear-gradient(to bottom, #0a264a, #103d79);
+$violetGradient: linear-gradient(to bottom, 
+    #dc57f8 0%, #9310b5 54%, #580673 81%, #7517f4 100%);
+$darkBlueGradient: linear-gradient(to bottom, #000f24, #032655);
+$greenGradient: linear-gradient(to bottom,
+    #ecffcc 0%,  #a2ff00 23%, #1d9b00 68%,#60ff00 99%);
+$grayGradient: linear-gradient(to bottom,
+    #eee 0%, #bbb 54%, #555 81%, #888 100%);
+
+
+@mixin grayCircle($size) {
+    display: inline-block;
+    width: $size;
+    height: $size;
+
+    vertical-align: middle;
+
+    border-radius: 50%;
+    background-color: #b4b4b4;
+}
+
+@mixin label() {
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+
+    height: $labelHeight;
+    padding: 0 30px 0 50px;
+
+    border-radius: $labelHeight / 2;
+
+    font-size: 16px;
+
+    background: 
+        url(../images/gleam.png) right top no-repeat, 
+        $violetGradient;
+    color: white;
+
+    &:before {
+        @include grayCircle($labelHeight);
+
+        content: '';
+        position: absolute;
+        left: -5px;
+    }
+}
+
+@mixin border($bg) {
+    position: relative;
+
+    padding: 10px 14px;
+    
+    background-color: #98efff;
+    border-radius: $bigRadius;
+    box-shadow: inset 0 0 4px #8dffff,
+                $outerShadow,
+                0 -3px 0 -2px white,
+                0 3px 0 -2px white;
+
+    & > * {
+        position: relative;
+    }
+
+    &:before {
+        content: '';
+
+        position: absolute;
+        top: 5px; bottom: 5px; left: 5px; right: 5px;
+        
+        border-radius: inherit;
+        background-color: $bg;
+        box-shadow: 
+            inset 0 0 4px 1px #2177ef,
+            inset 0 0 8px 1px #20569e,
+            0 0 10px 0 black;
+
+        z-index: 0;
+    }
+}
 
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background-color: #a1a1a1; }
-
-.fade-enter-active, .fade-leave-active {
-transition: opacity 1s;
-}
-.fade-enter, .fade-leave-to {
-opacity: 0;
+body { 
+    text-align: center;
 }
 
-.game {
-    width: 800px;
-    padding: 0 50px;
-    margin: auto;
+.bg {
+    width: 100%;
+    min-height: 100vh;
 
-    .wrapper {
-        display: flex;
-        justify-content: space-between;
+    background: $blueGradient;
+    color: white;
+}
+
+.wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+/* vue animation */
+    .fade-enter-active, .fade-leave-active {
+        transition: opacity 1s;
     }
-}
-
-.playground {
-    position: relative;
-
-    .field {
-        position: relative;
-
-        margin-top: 40px;
-        padding: 20px 25px;
-        
-        background-color: #81c1d0;
-        border-radius: $radius * 3;
-        box-shadow: inset 0 0 4px white,
-                    0 -3px 0 -2px white,
-                    0 3px 0 -2px white;
-
-        &:before {
-            content: '';
-
-            position: absolute;
-            top: 15px; bottom: 15px; left: 15px; right: 15px;
-            
-            border-radius: $radius * 2;
-            background-color: #0d233d;
-            box-shadow: 
-                inset 0 0 10px 5px #173e79,
-                0 0 20px 2px #3d6070;
-
-            z-index: 1;
-        }
-
-        canvas {
-            position: relative;
-            z-index: 2;
-        }
-
-        &[data-bonus="bomb"] canvas:hover {
-            cursor: url(../images/bomb.png), auto;
-        }
+    .fade-enter, .fade-leave-to {
+        opacity: 0;
     }
 
-}
-
-.info {
-    padding-left: 40px;
-
-    .stats {
-        position: relative;
-
-        width: 250px;
-        padding: 10px 30px;
-
-        background: #70f6ff;
-
-        border-radius: $radius * 2;
-
-        &:before {
-            content: '';
-
-            position: absolute;
-            top: 5px; bottom: 5px;
-            left: 5px; right: 5px;
-            border-radius: $radius * 1.5;
-
-            background: #20549a;
-
-            z-index: 0;
-        }
-
-        .active {
-            color: #60ff00;
-        }
-    }
-
-    .step {
-        width: 180px;
-        height: 180px;
+/* grid */
+    .container {
+        display: inline-block;
+        min-width: 900px;
+        padding: 0 20px;
         margin: auto;
-
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        position: relative;
-
-        background: url(../images/ball.png) center / contain no-repeat;
     }
 
-    .points {
-        position: relative;
-        margin: 15px 0;
-        padding: 5px 15px;
+    .row {
+        display: flex;
+        justify-content: flex-end;
+    }
 
-        color: white;
-        background: #0b264c;
+    .col {
+        flex-shrink: 0;
+        padding-top: 20px;
+        padding-bottom: 20px;
+        margin: 0 10px;
+
+        &_bonuses {
+            width: 100px;
+        }
+
+        &_playground {
+            flex-grow: 1;
+            max-width: 450px;
+        }
+
+        &_info {
+            width: 250px;
+        }
+    }
+/* end grid */
+
+.heading {
+    font-size: 20px;
+    margin-bottom: 5px;
+}
+
+.label {
+    @include label;
+}
+
+
+.bonuses {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    .bonus {
+        width: 90px;
+        padding: 5px;
+        margin: 10px 0;
 
         border-radius: $radius;
+        background: $violetGradient;
+        border: 4px solid #d85fef;
+        box-shadow: inset 0 12px 12px rgba(255, 255, 255, 0.4);
 
-        text-align: center;
+        cursor: pointer;
+        transition: background 400ms;
 
-        span {
-            display: block;
+        &-icon {
+            width: 50px;
+            height: 50px;
+            margin: auto;
+
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position: center;
         }
 
-        .count {
-            font-size: 1.6em;
+        &[data-bonus="bomb"] {
+            .bonus-icon {
+                background-image: url(../images/bonus-bomb.png);
+            }
         }
-    }
 
-    .bonuses {
-        &-items {
-            display: flex;
-            margin: 0 -10px;
+        &[data-bonus="mix"] {
+            .bonus-icon {
+                background-image: url(../images/bonus-mix.png);
+            }
         }
-        .bonus {
-            width: 80px;
-            height: 80px;
-            margin: 0 10px;
-            padding: 5px;
 
-            border-radius: $radius;
-            background: #b831d8;
+        &-count {
+            width: 100%;
+            height: 24px;
+            margin-top: 10px;
 
-            text-align: center;
+            border-radius: 12px;
 
-            cursor: pointer;
+            font-size: 16px;
 
-            &-icon {
-                width: 50px;
-                height: 50px;
-                margin: auto;
+            background: linear-gradient(to bottom, #30004e, #4d055d);
+            box-shadow: 
+                0px 0px 4px 4px #9c09b4;
 
-                background-repeat: no-repeat;
-                background-size: contain;
-                background-position: center;
+            transition: background 400ms;
+
+            &:after {
+                content: '';
+                @include grayCircle(15px);
+                margin-left: 5px;
             }
+        }
 
-            &[data-bonus="bomb"] {
-                .bonus-icon {
-                    background-image: url(../images/bonus-bomb.png);
-                }
-            }
+        &.inactive {
+            background: $grayGradient;
+            border-color: #eee;
 
-            &[data-bonus="mix"] {
-                .bonus-icon {
-                    background-image: url(../images/bonus-mix.png);
-                }
-            }
-
-            &-count {
-                
+            .bonus-count {
+                background: linear-gradient(to bottom, #555, #888);
+                box-shadow: none;
             }
         }
     }
@@ -179,23 +235,14 @@ opacity: 0;
 
 
 .progress {
-    width: 100%;
-    padding: 10px 20px 20px;
-
-    background: linear-gradient(to bottom, #0a264a, #103d79);
-    color: white;
-    border-radius: 0 0 $radius $radius;
-
-    text-align: center;
-    font-size: 24px;
+    padding: 0 14px;
 
     &-line {
         width: 100%;
-        height: 30px;
-        margin-top: 5px;
+        height: $labelHeight;
 
-        border-radius: $radius;
-        background: linear-gradient(to bottom, #000f24, #032655);
+        border-radius: $labelHeight / 2;
+        background: $darkBlueGradient;
         box-shadow: 0 1px 3px  #3186f9; 
     }
 
@@ -203,24 +250,92 @@ opacity: 0;
         width: 0%;
         height: 100%;
         border-radius: $radius;
-        background: linear-gradient(to bottom,
-            #ecffcc 0%, 
-            #a2ff00 23%, 
-            #1d9b00 68%,
-            #60ff00 99%
-        );
+        background: $greenGradient;
 
         transition: width 800ms;
         transition-delay: 400ms;
-
     }
-  }
+}
 
 
-  .finish {
+.field {
+    @include border(#0d233d);
+
+    display: inline-block;
+
+    &[data-bonus="bomb"] canvas:hover {
+        cursor: url(../images/bomb.png), auto;
+    }
+}
+
+.info {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.stats {
+    position: relative;
+
+    width: 250px;
+
+    @include border(#20549a);
+    padding-left: 30px;
+    padding-right: 30px;
+    
+    .active {
+        color: #60ff00;
+    }
+}
+
+.step {
+    width: 180px;
+    height: 180px;
+    margin: auto;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+
+    font-size: 70px;
+    color: white;
+
+    background: url(../images/ball.png) center / contain no-repeat;
+}
+
+.points {
+    position: relative;
+    margin: 15px 0;
+    padding: 5px 15px;
+
+    color: white;
+    background: $blueGradient;
+
+    border-radius: $radius;
+
+    text-align: center;
+
+    span {
+        display: block;
+    }
+
+    .count {
+        font-size: 1.6em;
+    }
+}
+
+
+
+
+
+
+
+.finish {
     position: absolute;
-    top: 0; bottom: 0;
-    left: 0; right: 0;
+    top: 5px; bottom: 5px;
+    left: 5px; right: 5px;
 
     display: flex;
     flex-direction: column;
@@ -228,8 +343,9 @@ opacity: 0;
     align-items: center;
 
     background: #173e79;
-    box-shadow: 0 0 10px 5px #173e79;
+    box-shadow: $outerShadow;
     color: white;
+    border-radius: $bigRadius;
 
     font-size: 40px;
     text-align: center;

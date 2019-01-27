@@ -21,7 +21,7 @@ export default {
     return {
       states: {
         'finish': {
-          'message': 'Супер!<br>Вы прошли игру!',
+          'message': 'Супер!<br>Вы прошли<br>игру!',
           'next': false,
           'restart': false,
           'new': true

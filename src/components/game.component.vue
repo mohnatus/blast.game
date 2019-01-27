@@ -1,55 +1,76 @@
 <template>
     <div class="wrapper">
-        <div class="playground">
-            <Progress 
-                v-bind:scores="scores" 
-                v-bind:target="target" />
-            <div class="field" v-bind:data-bonus="bonus">
-                <Field ref="field"
-                    v-on:ready="start"
-                    v-on:delete="onDelete"
-                    v-on:bonusApplied="bonus = null"
-                    v-bind:gameActive="active"
-                    v-bind:bonus="bonus" />
-                <transition name="fade">
-                    <Result 
-                        v-if="!active" 
-                        v-bind:scores="scores"
-                        v-bind:target="target"
-                        v-bind:maxLevel="maxLevel"
-                        v-bind:level="level"
-                        v-on:new="newGame"
-                        v-on:restart="restart"
-                        v-on:next="next" />
-                </transition>
-            </div>
-        </div>
-        <div class="info">
-            <div class="level">
-                {{ level }} уровень
-            </div>
-            <div class="stats">
-                <div class="step">{{ steps }}</div>
-                <div class="points">
-                    <span>Цель:</span>
-                    <span class="count active">{{ target }}</span>
-                </div>
-                <div class="points">
-                    <span>Очки:</span>
-                    <span class="count" v-bind:class="{active: scores >= target}">{{ scores }}</span>
+        <header>
+            <div class="container">
+                <div class="row">
+                    <div class="col col_bonuses">
+                        <div class="heading">Бонусы</div>
+                    </div>
+                    <div class="col col_playground">
+                        <Progress 
+                            v-bind:scores="scores" 
+                            v-bind:target="target" />
+                    </div>
+                    <div class="col col_info">
+                        <div class="level">
+                            <div class="heading">Уровень</div>
+                            <div class="label">{{ level }} </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <Bonuses 
-                v-bind:bonuses="bonuses"
-                v-bind:gameActive="active"
-                v-on:apply="applyBonus"/>
-        </div>
+        </header>
+        <main>
+            <div class="container">
+                <div class="row">
+                    <div class="col col_bonuses">
+                        <Bonuses 
+                            v-bind:bonuses="bonuses"
+                            v-bind:gameActive="active"
+                            v-on:apply="applyBonus"/>
+                    </div>
+                    <div class="col col_playground">
+                        <div class="field" v-bind:data-bonus="bonus">
+                            <Field ref="field"
+                                v-on:ready="start"
+                                v-on:delete="onDelete"
+                                v-on:bonusApplied="bonus = null"
+                                v-bind:gameActive="active"
+                                v-bind:bonus="bonus" />
+                            <transition name="fade">
+                                <Result 
+                                    v-if="!active" 
+                                    v-bind:scores="scores"
+                                    v-bind:target="target"
+                                    v-bind:maxLevel="maxLevel"
+                                    v-bind:level="level"
+                                    v-on:new="newGame"
+                                    v-on:restart="restart"
+                                    v-on:next="next" />
+                            </transition>
+                        </div>
+                    </div>
+                    <div class="col col_info">
+                        <div class="info">
+                                <div class="stats">
+                                <div class="step">{{ steps }}</div>
+                                <div class="points">
+                                    <span>Цель:</span>
+                                    <span class="count active">{{ target }}</span>
+                                </div>
+                                <div class="points">
+                                    <span>Очки:</span>
+                                    <span class="count" v-bind:class="{active: scores >= target}">{{ scores }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 </template>
-
-<style lang="scss">
-
-</style>
 
 <script>
 import Progress from './progress.component.vue';

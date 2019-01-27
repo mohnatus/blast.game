@@ -1,11 +1,11 @@
 <template>
     <div class="bonuses">
-        Бонусы
         <div class="bonuses-items">
             <div class="bonus"  
                 v-for="(count,bonus) in bonuses" 
                 v-bind:key="bonus"
                 v-bind:data-bonus="bonus"
+                v-bind:class="{inactive: count == 0}"
                 v-on:click="apply(bonus)">
                 <div class="bonus-icon"></div>
                 <div class="bonus-count">{{ count }}</div>

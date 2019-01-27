@@ -1,6 +1,6 @@
 <template>
   <div class="progress" >
-        Прогресс 
+        <div class="heading">Прогресс</div>
         <div class="progress-line">
             <div class="progress-value"
               v-bind:style='{width: width}'
