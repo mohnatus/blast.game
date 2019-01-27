@@ -7,7 +7,7 @@
                 v-bind:key="bonus"
                 v-bind:data-bonus="bonus"
                 v-on:click="apply(bonus)">
-                <div class="bonus-icon">{{ bonus }}</div>
+                <div class="bonus-icon"></div>
                 <div class="bonus-count">{{ count }}</div>
             </div>
         </div>
