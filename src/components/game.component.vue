@@ -104,7 +104,7 @@ export default {
             maxLevel: levels.length, // максимальный уровень
 
             bonuses: { // количество бонусов
-                'bomb': 10,
+                'bomb': 1,
                 'mix': 1,
             },
             bonus: null, // текущий бонус

@@ -127,6 +127,30 @@
             ctx.quadraticCurveTo(x, y, x + radius, y);
             ctx.closePath();
             ctx.fill();
+
+            // let shadow = ctx.createLinearGradient(x, y, x, y + width);
+            // shadow.addColorStop(0, 'white');
+            // shadow.addColorStop(0.01, 'rgba(255, 255, 255, 0.1)');
+            // shadow.addColorStop(0.3, 'transparent');
+            // shadow.addColorStop(0.7, 'transparent');
+            // shadow.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
+
+            // ctx.fillStyle = shadow;
+            // ctx.globalCompositeOperation = "source-atop";
+            // ctx.beginPath();
+            // ctx.moveTo(x + radius, y);
+            // ctx.lineTo(x + width - radius, y);
+            // ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            // ctx.lineTo(x + width, y + height - radius);
+            // ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            // ctx.lineTo(x + radius, y + height);
+            // ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            // ctx.lineTo(x, y + radius);
+            // ctx.quadraticCurveTo(x, y, x + radius, y);
+            // ctx.closePath();
+            // ctx.fill();
+            // ctx.globalCompositeOperation = 'source-over';
+            
         };
 
         let star = () => {
@@ -297,11 +321,9 @@
 
     // собрать набор цветов для тайла по значению оттенка цвета
     getTileColors(x, y, color) {
-        let saturate = color == -1 ? '50' : '100';
-        let baseColor = `hsl(${color}, ${saturate}%, 40%)`;
-        let lightColor = `hsl(${color}, ${saturate}%, 80%)`;
-        let darkColor = `hsl(${color}, ${saturate}%, 30%)`;
-        let brightColor =  `hsl(${color}, ${saturate}%, 100%)`;
+        let baseColor = `hsl(${color}, 100%, 50%)`;
+        let lightColor = `hsl(${color}, 100%, 80%)`;
+        let darkColor = `hsl(${color}, 100%, 40%)`;
 
         let x1 = x;
         let x2 = x;
@@ -309,16 +331,20 @@
         let y2 = y + this.width;
 
         let back = this.ctx.createLinearGradient(x1, y1, x2, y2);
-        back.addColorStop(0, lightColor);
-        back.addColorStop(1, baseColor);
+        back.addColorStop(0, `hsl(${color}, 100%, 100%)`);
+        back.addColorStop(0.02, `hsl(${color}, 100%, 80%)`);
+        back.addColorStop(0.5, `hsl(${color}, 100%, 60%)`);
+        back.addColorStop(0.8, `hsl(${color}, 60%, 40%)`);
+        back.addColorStop(1, `hsl(${color}, 40%, 40%)`);
 
-        let star = this.ctx.createLinearGradient(x1, y1, x2, y2);
-        star.addColorStop(0, darkColor);
-        star.addColorStop(1, lightColor);
+        let star = this.ctx.createRadialGradient(
+            x1 + this.width * 0.5, y2 - this.width * 0.25, this.width * 0.5,
+            x1 + this.width * 0.5, y2, this.width * 0.25
+            );
+        star.addColorStop(0, `hsl(${color + 8}, 40%, 40%)`);
+        star.addColorStop(1, `hsl(${color - 8}, 100%, 60%)`);
 
-        let bright = this.ctx.createLinearGradient(x1, y1, x2, y2);
-        bright.addColorStop(0, lightColor);
-        bright.addColorStop(1, brightColor);
+        let bright = `hsl(${color + 180}, 100%, 80%)`;
 
         return {
             back: back, 
@@ -329,9 +355,6 @@
             bright: bright
         };
     }
-
-    
-
   }
 
 
