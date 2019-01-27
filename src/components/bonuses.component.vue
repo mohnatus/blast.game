@@ -16,10 +16,14 @@
 
 <script>
 export default {
-    props: ['bonuses', 'gameActive'],
+    props: ['bonuses', 'gameActive', 'active'],
 
     methods: {
         apply: function(type) {
+            if (this.active == type) {
+                this.$emit('reset', type);
+                return;
+            }
             if (this.gameActive && this.bonuses[type]) this.$emit('apply', type);
         }
     }

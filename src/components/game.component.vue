@@ -27,7 +27,9 @@
                         <Bonuses 
                             v-bind:bonuses="bonuses"
                             v-bind:gameActive="active"
-                            v-on:apply="applyBonus"/>
+                            v-bind:active="bonus"
+                            v-on:apply="applyBonus"
+                            v-on:reset="resetBonus"/>
                     </div>
                     <div class="col col_playground">
                         <div class="field" v-bind:data-bonus="bonus">
@@ -102,7 +104,7 @@ export default {
             maxLevel: levels.length, // максимальный уровень
 
             bonuses: { // количество бонусов
-                'bomb': 1,
+                'bomb': 10,
                 'mix': 1,
             },
             bonus: null, // текущий бонус
@@ -206,6 +208,13 @@ export default {
                 this.$refs.field.mix();
                 this.bonus = null;
             }
+        },
+
+        resetBonus: function() {
+
+            this.bonuses[this.bonus]++;
+            this.bonus = null;
+            
         }
     }
 }
