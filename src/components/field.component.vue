@@ -11,7 +11,7 @@ import { Point } from '../js/point.js'; // модель точки/позици�
 import { Tile } from '../js/tile.js'; // модель тайла
 
 import { levels } from '../js/levels.js'; // настройки уровней
-import { statuses } from '../js/statuses.js'; // доступные статусы тайлов
+import { statuses, actions } from '../js/statuses.js'; // доступные статусы тайлов
 
 export default {
     components: { 
@@ -42,6 +42,7 @@ export default {
             this.colors = settings.colors; // отобрать цвета для уровня
 
             this.bombRadius = settings.bombRadius || 1; 
+            this.superCount = settings.superCount || this.superCount;
 
             this.map = []; // собрать матрицу игрового поля
             for (let y = 0; y < this.rows; y++) {
@@ -83,7 +84,6 @@ export default {
         // проверить, есть ли доступные комбинации
         check: function() {
             let counter = 0;
-            let checked = [];
             let availableGroups = false;
 
             let check = (position, color) => {
@@ -102,12 +102,9 @@ export default {
                     currentTile.color !== color // или цвет не совпадает
                 ) return; // пропустить ее
 
-                if (status) currentTile.status = status;
-
                 counter++; // увеличить счетчик
                 
                 currentTile.checked = true; // пометить тайл как проверенный
-                checked.push(currentTile)
 
                 check(new Point(position.x - 1, position.y), color);
                 check(new Point(position.x + 1, position.y), color);
@@ -175,19 +172,19 @@ export default {
             // супертайл
             if (tile.status == statuses.super) {
                 let row = this.getRow(position);
-                tile.status = statuses.default;
+                tile.action = actions.default;
                 this.targetChecked = true;
                 targets = [...targets, ...row];
             }
 
             if (this.bonus == 'bomb') {
-                let radius = this.getRadius(position, this.bombRadius, statuses.bomb);
+                let radius = this.getRadius(position, this.bombRadius, actions.bomb);
                 targets = [...targets, ...radius];
             }
 
             // если обычный тайл и нет бомбы, собрать соседей
             if (!targets.length) {
-                targets = this.getNeighbors(position);
+                targets = this.getNeighbors(position, actions.default);
 
                 // если группа меньше минимальной 
                 if (targets.length < this.min) {
@@ -197,6 +194,7 @@ export default {
 
                 if (targets.length >= this.superCount) {
                     tile.status = statuses.super;
+                    tile.action = actions.super;
                 }
             } 
 
@@ -206,8 +204,9 @@ export default {
                 if (cell.x == position.x && cell.y == position.y) return;
                 let tile = this.map[cell.y][cell.x];
                 
-                if (!tile.targetChecked && tile.status == statuses.super) {
-                    tile.status = statuses.default;
+                if (tile.status == statuses.super) {
+                    if (tile.action == actions.super)
+                        tile.action = actions.default;
                     let row = this.getRow(tile.position);
                     targets = [...targets, ...row];
                 }
@@ -220,7 +219,7 @@ export default {
                 targets.forEach(point => {
                     let tile = this.map[point.y][point.x];
                     if (!tile) return;
-                    if (tile.status !== statuses.super)
+                    if (tile.action !== actions.super)
                         this.map[point.y][point.x] = null;
                 })
                 // отправить событие в игру
@@ -243,7 +242,7 @@ export default {
         },
 
         // собрать группу тайлов одного цвета
-        getNeighbors: function(position, status) {
+        getNeighbors: function(position, action) {
 
             let tile = this.map[position.y][position.x];
             let color = tile.color;
@@ -267,7 +266,7 @@ export default {
                     currentTile.color !== color // или цвет не совпадает
                 ) return; // пропустить ее
 
-                if (status) currentTile.status = status;
+                if (action) currentTile.action = action;
 
                 neighbors.push(position); // добавить клетку в массив
                 currentTile.checked = true; // пометить тайл как проверенный
@@ -286,7 +285,7 @@ export default {
         },
 
         // собрать группу тайлов в радиусе действия бомбы 
-        getRadius: function(position, radius, status) {
+        getRadius: function(position, radius, action) {
             let x1 = Math.max(position.x - radius, 0);
             let x2 = Math.min(position.x + radius, this.cols - 1);
 
@@ -297,7 +296,7 @@ export default {
 
             for (let y = y1; y <= y2; y++) {
                 for (let x = x1; x <= x2; x++) {
-                    if (status) this.map[y][x].status = status;
+                    if (action) this.map[y][x].action = action;
                     tiles.push(new Point(x, y));
                 }
             }

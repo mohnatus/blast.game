@@ -3,13 +3,13 @@
     <div class="status" v-html="state.message"></div>
     <div class="finish-buttons">
         <button class="restart" 
-          v-on:click="$emit('restart')">Попробовать снова</button>
+          v-on:click="$emit('restart')">Переиграть уровень</button>
         <button class="next-level" 
           v-if="state.next"
           v-on:click="$emit('next')">Следующий уровень</button>
         <button class="next-level" 
           v-if="state.new"
-          v-on:click="$emit('new')">Начать сначала</button>
+          v-on:click="$emit('new')">Начать игру сначала</button>
     </div>
   </div>
 </template>

@@ -14,6 +14,7 @@ let levels = [
     steps: 15,
     target: 350,
     min: 2,
+    superCount: 6
   },{
     rows: 12,
     cols: 12,
@@ -22,6 +23,7 @@ let levels = [
     target: 400,
     min: 3,
     bombRadius: 2,
+    superCount: 7
   }
 ];
 

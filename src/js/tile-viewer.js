@@ -2,7 +2,7 @@
   import { Point } from './point.js';
   import { Tile } from './tile.js';
   import { assets } from './assets.js';
-  import { statuses } from './statuses.js';
+  import { statuses, actions } from './statuses.js';
 
   let settings = {
     heightRatio: 1.14, // отношение высоты тайла к ширине
@@ -73,19 +73,20 @@
     draw(tile, coords, size) {
         if (!tile) return; // пустая клетка
 
-        size = size || this.width;
+        size = size || size === 0 ? size : this.width;
 
-        if (tile.status == statuses.super || tile.super) this.drawSuper(tile, coords, size);
-        else if (tile.status == statuses.bomb) this.drawBomb(tile, coords, size);
-        else this.drawDefault(tile, coords, size);
+        if (size === 0) return;
+
         
+        if (tile.action == actions.bomb) this.drawBomb(tile, coords, size);
+        else if (tile.status == statuses.super) this.drawSuper(tile, coords, size);
+        else this.drawDefault(tile, coords, size);
     }
 
     drawDefault(tile, coords, size) {
-       
         let ctx = this.ctx;
-        
-        size = size && size !== 0 ? size : this.width;
+
+        size = size || this.width;
 
         // координаты и размеры
         let diff = this.width - size;
@@ -149,7 +150,6 @@
 
     // отрисовать супер-тайл
     drawSuper(tile, coords, size) {
-        tile.super = true;
         let ctx = this.ctx;
         
         size = size && size !== 0 ? size : this.width;
@@ -239,13 +239,12 @@
             let progress = timestamp - start;
             this.clear(coords);
 
-            let size = this.getDeleteSize(tile.status, progress);
+            let size = this.getDeleteSize(tile.action, progress);
+            this.draw(tile, coords, size);
 
             if (progress < stop) {
-                this.draw(tile, coords, size);
                 requestAnimationFrame(step);
             } else {
-                if (tile.status == statuses.super) this.draw(tile, coords, size)
                 callback();
             }
         }
@@ -253,36 +252,41 @@
         requestAnimationFrame(step); 
     }
 
-    getDeleteSize(status, time) {
+    // вычислить размер удаляемого тайла в зависимости от времени
+    getDeleteSize(action, time) {
         if (time < 0) time = 0;
         let size;
-        if (status == statuses.super) {
-            size = this.width;
-        } else if (status == statuses.bomb) {
-            let increaseTime = settings.deleteTime / 3;
-            let decreaseTime = settings.deleteTime - increaseTime;
-            let increaseDiff = this.width / increaseTime;
-            let decreaseDiff = this.width / decreaseTime;
 
-            // если бомба - 300ms увеличение, потом уменьшение
-            if (time < increaseTime) {
-                size = increaseDiff * time;
-            } else {
-                time -= increaseTime;
-                size = this.width - decreaseDiff * time;
-                
+        if (action == actions.super) { // новые супертайлы не уменьшаются
+            size = this.width;
+        } else if (action == actions.bomb) { // бомбы увеличиваются и исчезают
+            if (time >= settings.deleteTimer) size = 0;
+            else {
+                let increaseTime = settings.deleteTime / 3;
+                let decreaseTime = settings.deleteTime - increaseTime;
+                let increaseDiff = this.width / increaseTime;
+                let decreaseDiff = this.width / decreaseTime;
+
+                // если бомба - 300ms увеличение, потом уменьшение
+                if (time < increaseTime) {
+                    size = increaseDiff * time;
+                } else {
+                    time -= increaseTime;
+                    size = this.width - decreaseDiff * time; 
+                }
             }
-        } else {
-            let diff = this.width / settings.deleteTime;
-            // если обычный тайл - равномерное уменьшение
-            size = this.width - diff * time;
+        } else { // обычные тайлы равномерно уменьшаются
+            if (time >= settings.deleteTime) size = 0;
+            else {
+                let diff = this.width / settings.deleteTime;
+                size = this.width - diff * time;
+            }    
         }
 
         return size;
     }
 
     clear(coords) {
-
         if (!coords) return;
         this.ctx.clearRect(
             coords.x1, coords.y1, 
