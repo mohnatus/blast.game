@@ -31,10 +31,11 @@ const config = {
         loader: 'babel-loader'
       }]
     }, {
-      test: /\.scss$/,
+      test: /\.(sa|sc|c)ss$/,
       exclude: /node_modules/,
       use: [
-        isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
+        //isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
+        'style-loader',
         'vue-style-loader',
         'css-loader',
         {

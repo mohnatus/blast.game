@@ -1,3 +1,9 @@
+@font-face {
+    font-family: Marvin;
+    src: url(./../fonts/Marvin.otf);
+}
+
+
 $backgroundColor: #a1a1a1;
 $labelHeight: 30px;
 
@@ -91,6 +97,7 @@ $grayGradient: linear-gradient(to bottom,
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { 
     text-align: center;
+    font-family: Marvin, sans-serif;
 }
 
 .bg {
